@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 3 - Relational Algebra</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .code-block .comment { color: #68d391; }
+        .code-block .keyword { color: #63b3ed; }
+        .code-block .string { color: #f6ad55; }
+        .code-block .op { color: #f687b3; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .op-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .op-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .ra-expr { background: #1e293b; color: #e2e8f0; padding: 14px 18px; border-radius: 8px; font-family: 'Consolas', monospace; font-size: 1em; margin: 10px 0; }
+        .level-tag { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 0.75em; font-weight: 700; margin-right: 8px; }
+        .level-easy { background: #d1fae5; color: #065f46; }
+        .level-med { background: #fef3c7; color: #92400e; }
+        .level-hard { background: #fee2e2; color: #991b1b; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge green">SESSION 3</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Relational Algebra</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit I | Duration: 2 Hours | The Foundation of SQL</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">Select σ</span>
+            <span class="badge">Project π</span>
+            <span class="badge">Union ∪</span>
+            <span class="badge">Difference −</span>
+            <span class="badge">Product ×</span>
+            <span class="badge purple">Joins ⋈</span>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 2: Learning Objectives -->
+<div class="slide">
+    <h1>🎯 Learning Objectives</h1>
+    <p class="subtitle">By the end of this session, you will be able to:</p>
+    <div class="two-col">
+        <div>
+            <div class="op-card">
+                <h4>🧮 Core Operations</h4>
+                <ul>
+                    <li>Write expressions using σ, π, ∪, ∩, −, ×</li>
+                    <li>Understand properties (commutative, associative)</li>
+                    <li>Combine operations for complex queries</li>
+                </ul>
+            </div>
+            <div class="op-card">
+                <h4>🔗 Joins</h4>
+                <ul>
+                    <li>Natural Join, Equi Join, Theta Join</li>
+                    <li>Left, Right, Full Outer Joins</li>
+                    <li>When to use which join type</li>
+                </ul>
+            </div>
+        </div>
+        <div>
+            <div class="op-card">
+                <h4>💻 SQL Mapping</h4>
+                <ul>
+                    <li>Map every RA expression to SQL</li>
+                    <li>Understand how SQL executes behind the scenes</li>
+                    <li>Write better, more efficient queries</li>
+                </ul>
+            </div>
+            <div class="op-card">
+                <h4>📝 Assessment</h4>
+                <ul>
+                    <li>5-question live quiz</li>
+                    <li>15 RA problems (pen & paper + MySQL)</li>
+                    <li>Assignment: 10 theory + practical tasks</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 3: What is RA -->
+<div class="slide">
+    <h1>🧮 What is Relational Algebra?</h1>
+    <div class="highlight-box">
+        <strong>Relational Algebra</strong> is a <strong>procedural query language</strong> that takes one or more relations as input and produces a new relation as output. It is the <strong>theoretical foundation of SQL</strong>.
+    </div>
+    <div class="two-col">
+        <div>
+            <h3>Why Study RA?</h3>
+            <ul>
+                <li>Every SQL query has an equivalent RA expression</li>
+                <li>Understanding RA helps you write better SQL</li>
+                <li>Standard topic in GATE & placements</li>
+                <li>Query optimizers use RA internally</li>
+            </ul>
+        </div>
+        <div>
+            <h3>Key Property</h3>
+            <div class="success-box">
+                <strong>Closure Property:</strong><br>
+                The result of ANY operation is always another relation.<br><br>
+                Input: Relation(s) → Output: Relation<br>
+                This allows <strong>chaining</strong> operations!
+            </div>
+        </div>
+    </div>
+    <h3>Classification of Operations</h3>
+    <div class="diagram">
+┌─────────────────────────────────────────────────────────────┐
+│              RELATIONAL ALGEBRA OPERATIONS                   │
+├──────────────────────────┬──────────────────────────────────┤
+│   FUNDAMENTAL (5)        │      ADDITIONAL                  │
+├──────────────────────────┼──────────────────────────────────┤
+│ 1. Select (σ)            │ 6. Intersection (∩)              │
+│ 2. Project (π)           │ 7. Natural Join (⋈)              │
+│ 3. Union (∪)             │ 8. Division (÷)                  │
+│ 4. Set Difference (−)    │ 9. Assignment (←)                │
+│ 5. Cartesian Product (×) │ 10. Outer Joins                  │
+└──────────────────────────┴──────────────────────────────────┘
+    </div>
+    <p style="text-align:center; color:#38a169; font-weight:600;">✅ The 5 fundamental operations are complete — all others can be derived from them!</p>
+</div>
+
+<!-- SLIDE 4: Select -->
+<div class="slide">
+    <h1>🔍 Select (σ) — Horizontal Subset</h1>
+    <div class="highlight-box">
+        <strong>Select (σ)</strong> filters <strong>rows</strong> (tuples) that satisfy a condition. It keeps ALL columns but removes rows that don't match.
+    </div>
+    <div class="ra-expr">
+        <span style="color:#f687b3;">σ</span> <span style="color:#f6ad55;">&lt;condition&gt;</span> (Relation)
+    </div>
+    <h3>Examples</h3>
+    <div class="two-col">
+        <div>
+            <div class="op-card">
+                <h4>Example 1: Simple Condition</h4>
+                <div class="ra-expr" style="font-size:0.9em;">σ dept = 'EC' (Student)</div>
+                <p style="font-size:0.85em; color:#4a5568; margin-top:6px;">"Select all students from EC department"</p>
+            </div>
+            <div class="op-card">
+                <h4>Example 2: Numeric Comparison</h4>
+                <div class="ra-expr" style="font-size:0.9em;">σ marks > 80 (Student)</div>
+                <p style="font-size:0.85em; color:#4a5568; margin-top:6px;">"Select students with marks greater than 80"</p>
+            </div>
+        </div>
+        <div>
+            <div class="op-card">
+                <h4>Example 3: Multiple Conditions (AND)</h4>
+                <div class="ra-expr" style="font-size:0.9em;">σ dept='EC' ∧ gender='F' ∧ marks>75 (Student)</div>
+                <p style="font-size:0.85em; color:#4a5568; margin-top:6px;">"EC female students with marks > 75"</p>
+            </div>
+            <div class="op-card">
+                <h4>Example 4: OR Condition</h4>
+                <div class="ra-expr" style="font-size:0.9em;">σ dept='EC' ∨ dept='CS' (Student)</div>
+                <p style="font-size:0.85em; color:#4a5568; margin-top:6px;">"Students from EC OR CS department"</p>
+            </div>
+        </div>
+    </div>
+    <div class="code-block">
+<span class="comment">-- SQL Equivalent of Example 3</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student
+<span class="keyword">WHERE</span> dept = <span class="string">'EC'</span> <span class="keyword">AND</span> gender = <span class="string">'F'</span> <span class="keyword">AND</span> marks > 75;
+    </div>
+</div>
+
+<!-- SLIDE 5: Project -->
+<div class="slide">
+    <h1>📋 Project (π) — Vertical Subset</h1>
+    <div class="highlight-box">
+        <strong>Project (π)</strong> selects specific <strong>columns</strong> (attributes), removing duplicates. It keeps selected columns and all matching rows.
+    </div>
+    <div class="ra-expr">
+        <span style="color:#f687b3;">π</span> <span style="color:#f6ad55;">&lt;attribute_list&gt;</span> (Relation)
+    </div>
+    <h3>Examples</h3>
+    <div class="two-col">
+        <div>
+            <div class="op-card">
+                <h4>Example 1: Single Column</h4>
+                <div class="ra-expr" style="font-size:0.9em;">π name (Student)</div>
+                <p style="font-size:0.85em; color:#4a5568; margin-top:6px;">"Get names of all students"</p>
+                <div class="warning-box" style="margin-top:8px; font-size:0.85em;">
+                    ⚠️ Removes duplicates! In SQL: <code>SELECT DISTINCT</code>
+                </div>
+            </div>
+            <div class="op-card">
+                <h4>Example 2: Multiple Columns</h4>
+                <div class="ra-expr" style="font-size:0.9em;">π name, dept (Student)</div>
+                <p style="font-size:0.85em; color:#4a5568; margin-top:6px;">"Get names and departments"</p>
+            </div>
+        </div>
+        <div>
+            <div class="op-card" style="border-color:#f59e0b;">
+                <h4 style="color:#c05621;">🎯 Combined: Select THEN Project</h4>
+                <div class="ra-expr" style="font-size:0.9em;">π name (σ dept='EC' (Student))</div>
+                <p style="font-size:0.85em; color:#4a5568; margin-top:6px;">"Names of EC students"</p>
+                <div class="warning-box" style="margin-top:8px; font-size:0.85em;">
+                    ❌ Wrong order: σ dept='EC' (π name (Student))<br>
+                    → ERROR! dept was projected away!
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="code-block">
+<span class="comment">-- SQL Equivalent of Combined Example</span>
+<span class="keyword">SELECT DISTINCT</span> name <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> dept = <span class="string">'EC'</span>;
+    </div>
+</div>
+
+<!-- SLIDE 6: Set Operations -->
+<div class="slide">
+    <h1>🔄 Set Operations</h1>
+    <div class="warning-box">
+        <strong>⚠️ Union Compatibility Required:</strong> Two relations must have the same number of attributes (degree) and corresponding attributes from the same domain.
+    </div>
+    <div class="two-col">
+        <div>
+            <div class="op-card" style="border-color:#38a169;">
+                <h4 style="color:#276749;">Union (∪)</h4>
+                <p style="font-size:0.9em;">All tuples in R <strong>OR</strong> S (duplicates removed)</p>
+                <div class="ra-expr" style="font-size:0.85em;">π roll_no (Sports) ∪ π roll_no (Cultural)</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">"Students in Sports OR Cultural club"</p>
+                <div class="success-box" style="margin-top:8px; font-size:0.8em;">✅ Commutative: R ∪ S = S ∪ R</div>
+            </div>
+            <div class="op-card" style="border-color:#e53e3e;">
+                <h4 style="color:#c53030;">Difference (−)</h4>
+                <p style="font-size:0.9em;">Tuples in R <strong>but NOT</strong> in S</p>
+                <div class="ra-expr" style="font-size:0.85em;">π roll_no (Sports) − π roll_no (Cultural)</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">"Students in Sports but NOT Cultural"</p>
+                <div class="warning-box" style="margin-top:8px; font-size:0.8em;">❌ NOT Commutative: R − S ≠ S − R</div>
+            </div>
+        </div>
+        <div>
+            <div class="op-card" style="border-color:#805ad5;">
+                <h4 style="color:#6b21a8;">Intersection (∩)</h4>
+                <p style="font-size:0.9em;">Tuples in R <strong>AND</strong> S (both)</p>
+                <div class="ra-expr" style="font-size:0.85em;">π roll_no (Sports) ∩ π roll_no (Cultural)</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">"Students in BOTH clubs"</p>
+                <div class="highlight-box" style="margin-top:8px; font-size:0.8em;">
+                    💡 Derived: R ∩ S = R − (R − S)
+                </div>
+            </div>
+            <div style="background:#f7fafc; border:2px dashed #cbd5e0; border-radius:10px; padding:15px; margin-top:10px;">
+                <h4 style="color:#2d3748; margin-bottom:8px;">Venn Diagram View</h4>
+                <div class="diagram" style="font-size:0.85em;">
+    ┌─────────┐      ┌─────────┐
+    │   R     │      │    S    │
+    │  ┌───┐  │      │  ┌───┐  │
+    │  │ ∪ │  │      │  │ ∩ │  │
+    │  └───┘  │      │  └───┘  │
+    └─────────┘      └─────────┘
+    All in either    Only in both
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 7: Cartesian Product -->
+<div class="slide">
+    <h1>✖️ Cartesian Product (×)</h1>
+    <div class="highlight-box">
+        <strong>Cartesian Product</strong> combines EVERY tuple from R with EVERY tuple from S. If R has m rows and S has n rows, R × S has <strong>m × n</strong> rows.
+    </div>
+    <div class="ra-expr">
+        <span style="color:#f687b3;">R × S</span>
+    </div>
+    <div class="two-col">
+        <div>
+            <div class="op-card">
+                <h4>Example</h4>
+                <p style="font-size:0.9em;">Student (100 rows) × Department (5 rows)</p>
+                <p style="font-size:0.9em; color:#e53e3e; font-weight:600;">= 500 rows!</p>
+                <p style="font-size:0.85em; color:#4a5568;">Most combinations are meaningless (student paired with wrong dept)</p>
+            </div>
+        </div>
+        <div>
+            <div class="op-card" style="border-color:#38a169;">
+                <h4 style="color:#276749;">✅ Real Usage: × + σ = Join</h4>
+                <div class="ra-expr" style="font-size:0.85em;">σ s.dept_id = d.dept_id (Student × Department)</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">Filter only valid combinations → meaningful result!</p>
+            </div>
+        </div>
+    </div>
+    <div class="code-block">
+<span class="comment">-- SQL: Cross Join (rarely used alone)</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student <span class="keyword">CROSS JOIN</span> department;
+
+<span class="comment">-- SQL: Cross Join + WHERE = Inner Join</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student s, department d
+<span class="keyword">WHERE</span> s.dept_id = d.dept_id;
+    </div>
+</div>
+
+<!-- SLIDE 8: Joins -->
+<div class="slide">
+    <h1>🔗 Joins</h1>
+    <div class="highlight-box">
+        <strong>Join</strong> combines tuples from two relations based on a related column. It is the most common operation in databases.<br><br>
+        <strong>Join = Cartesian Product + Select</strong>
+    </div>
+    <h3>Types of Joins</h3>
+    <table>
+        <tr><th>Join Type</th><th>Symbol</th><th>Keeps Unmatched</th><th>SQL</th></tr>
+        <tr><td><strong>Natural Join</strong></td><td>⋈</td><td>Neither</td><td><code>NATURAL JOIN</code></td></tr>
+        <tr><td><strong>Equi Join</strong></td><td>—</td><td>Neither</td><td><code>JOIN ... ON a = b</code></td></tr>
+        <tr><td><strong>Theta Join</strong></td><td>⋈θ</td><td>Neither</td><td><code>JOIN ... ON condition</code></td></tr>
+        <tr><td><strong>Left Outer</strong></td><td>⟕</td><td>Left only</td><td><code>LEFT JOIN</code></td></tr>
+        <tr><td><strong>Right Outer</strong></td><td>⟖</td><td>Right only</td><td><code>RIGHT JOIN</code></td></tr>
+        <tr><td><strong>Full Outer</strong></td><td>⟗</td><td>Both</td><td><code>FULL JOIN</code></td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 9: Natural vs Equi Join -->
+<div class="slide">
+    <h1>🔗 Natural Join vs Equi Join</h1>
+    <div class="two-col">
+        <div>
+            <div class="op-card" style="border-color:#38a169;">
+                <h4 style="color:#276749;">Natural Join (⋈)</h4>
+                <ul style="font-size:0.9em;">
+                    <li>Automatically joins on <strong>common attributes</strong></li>
+                    <li>Removes <strong>duplicate columns</strong></li>
+                    <li>Requires same attribute names</li>
+                </ul>
+                <div class="ra-expr" style="font-size:0.85em;">Student ⋈ Department</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">Joins on dept_id, keeps one dept_id column</p>
+            </div>
+        </div>
+        <div>
+            <div class="op-card" style="border-color:#3182ce;">
+                <h4 style="color:#2b6cb0;">Equi Join</h4>
+                <ul style="font-size:0.9em;">
+                    <li>Joins on <strong>equality condition</strong></li>
+                    <li>Keeps <strong>both columns</strong></li>
+                    <li>More explicit and flexible</li>
+                </ul>
+                <div class="ra-expr" style="font-size:0.85em;">σ s.dept_id = d.dept_id (Student × Department)</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">Keeps both dept_id columns (Student.dept_id, Department.dept_id)</p>
+            </div>
+        </div>
+    </div>
+    <div class="code-block">
+<span class="comment">-- Natural Join</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student <span class="keyword">NATURAL JOIN</span> department;
+
+<span class="comment">-- Equi Join (explicit)</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student s <span class="keyword">JOIN</span> department d <span class="keyword">ON</span> s.dept_id = d.dept_id;
+    </div>
+</div>
+
+<!-- SLIDE 10: Outer Joins -->
+<div class="slide">
+    <h1>🌐 Outer Joins</h1>
+    <div class="two-col">
+        <div>
+            <div class="op-card" style="border-color:#3182ce;">
+                <h4 style="color:#2b6cb0;">Left Outer Join (⟕)</h4>
+                <p style="font-size:0.9em;">All tuples from <strong>LEFT</strong> + matching from right</p>
+                <div class="ra-expr" style="font-size:0.85em;">Student ⟕ Department</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">"All students + their dept (NULL if no dept)"</p>
+            </div>
+            <div class="op-card" style="border-color:#dd6b20;">
+                <h4 style="color:#c05621;">Right Outer Join (⟖)</h4>
+                <p style="font-size:0.9em;">All tuples from <strong>RIGHT</strong> + matching from left</p>
+                <div class="ra-expr" style="font-size:0.85em;">Student ⟖ Department</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">"All departments + their students (NULL if no students)"</p>
+            </div>
+        </div>
+        <div>
+            <div class="op-card" style="border-color:#805ad5;">
+                <h4 style="color:#6b21a8;">Full Outer Join (⟗)</h4>
+                <p style="font-size:0.9em;">All tuples from <strong>BOTH</strong> sides</p>
+                <div class="ra-expr" style="font-size:0.85em;">Student ⟗ Department</div>
+                <p style="font-size:0.8em; color:#4a5568; margin-top:4px;">"All students AND all departments, NULLs where no match"</p>
+            </div>
+            <div style="background:#f7fafc; border:2px dashed #cbd5e0; border-radius:10px; padding:15px;">
+                <h4 style="color:#2d3748; margin-bottom:8px; font-size:0.95em;">Visual Comparison</h4>
+                <div class="diagram" style="font-size:0.8em;">
+LEFT:     [Student ◀═══▶ Dept] + Student only
+RIGHT:    [Student ◀═══▶ Dept] + Dept only
+FULL:     [Student ◀═══▶ Dept] + Student only + Dept only
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="code-block">
+<span class="comment">-- Left Outer Join</span>
+<span class="keyword">SELECT</span> s.name, d.dept_name
+<span class="keyword">FROM</span> student s <span class="keyword">LEFT JOIN</span> department d <span class="keyword">ON</span> s.dept_id = d.dept_id;
+
+<span class="comment">-- Right Outer Join</span>
+<span class="keyword">SELECT</span> s.name, d.dept_name
+<span class="keyword">FROM</span> student s <span class="keyword">RIGHT JOIN</span> department d <span class="keyword">ON</span> s.dept_id = d.dept_id;
+    </div>
+</div>
+
+<!-- SLIDE 11: RA to SQL Cheat Sheet -->
+<div class="slide">
+    <h1>📋 RA to SQL Cheat Sheet</h1>
+    <table>
+        <tr><th>RA Operation</th><th>Symbol</th><th>SQL Equivalent</th></tr>
+        <tr><td>Select</td><td><code>σ condition(R)</code></td><td><code>SELECT * FROM R WHERE condition</code></td></tr>
+        <tr><td>Project</td><td><code>π attrs(R)</code></td><td><code>SELECT DISTINCT attrs FROM R</code></td></tr>
+        <tr><td>Union</td><td><code>R ∪ S</code></td><td><code>SELECT * FROM R UNION SELECT * FROM S</code></td></tr>
+        <tr><td>Intersection</td><td><code>R ∩ S</code></td><td><code>SELECT * FROM R INTERSECT SELECT * FROM S</code></td></tr>
+        <tr><td>Difference</td><td><code>R − S</code></td><td><code>SELECT * FROM R EXCEPT SELECT * FROM S</code></td></tr>
+        <tr><td>Cartesian Product</td><td><code>R × S</code></td><td><code>SELECT * FROM R CROSS JOIN S</code></td></tr>
+        <tr><td>Natural Join</td><td><code>R ⋈ S</code></td><td><code>SELECT * FROM R NATURAL JOIN S</code></td></tr>
+        <tr><td>Equi Join</td><td><code>—</code></td><td><code>SELECT * FROM R JOIN S ON R.a = S.a</code></td></tr>
+        <tr><td>Theta Join</td><td><code>R ⋈θ S</code></td><td><code>SELECT * FROM R JOIN S ON condition</code></td></tr>
+        <tr><td>Left Outer</td><td><code>R ⟕ S</code></td><td><code>SELECT * FROM R LEFT JOIN S ON condition</code></td></tr>
+        <tr><td>Right Outer</td><td><code>R ⟖ S</code></td><td><code>SELECT * FROM R RIGHT JOIN S ON condition</code></td></tr>
+        <tr><td>Rename</td><td><code>ρ New(R)</code></td><td><code>SELECT * FROM R AS New</code></td></tr>
+    </table>
+    <div class="success-box">
+        <strong>Key Formula:</strong> R ∩ S = R − (R − S)<br>
+        <strong>Key Insight:</strong> Join = Cartesian Product + Select
+    </div>
+</div>
+
+<!-- SLIDE 12: Problems 1-5 -->
+<div class="slide">
+    <h1>📝 Practice Problems 1-5 (Level: Easy)</h1>
+    <p class="subtitle">Using schema: STUDENT(roll_no, name, email, phone, dob, gender, dept_id, cgpa)</p>
+
+    <div class="op-card">
+        <span class="level-tag level-easy">EASY</span>
+        <strong>Q1.</strong> Find all students belonging to the EC department (dept_id = 1).
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">σ dept_id = 1 (Student)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> dept_id = 1;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-easy">EASY</span>
+        <strong>Q2.</strong> Find names and emails of all students.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π name, email (Student)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT DISTINCT</span> name, email <span class="keyword">FROM</span> student;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-easy">EASY</span>
+        <strong>Q3.</strong> Find names of female students with CGPA > 8.5.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π name (σ gender='F' ∧ cgpa>8.5 (Student))</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT DISTINCT</span> name <span class="keyword">FROM</span> student
+<span class="keyword">WHERE</span> gender = <span class="string">'F'</span> <span class="keyword">AND</span> cgpa > 8.5;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-easy">EASY</span>
+        <strong>Q4.</strong> Find all distinct departments that have at least one student.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π dept_id (Student)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT DISTINCT</span> dept_id <span class="keyword">FROM</span> student;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-easy">EASY</span>
+        <strong>Q5.</strong> Find students born after January 1, 2004.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">σ dob > '2004-01-01' (Student)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> student <span class="keyword">WHERE</span> dob > <span class="string">'2004-01-01'</span>;
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 13: Problems 6-10 -->
+<div class="slide">
+    <h1>📝 Practice Problems 6-10 (Level: Medium)</h1>
+    <p class="subtitle">Multi-table queries using Joins</p>
+
+    <div class="op-card">
+        <span class="level-tag level-med">MEDIUM</span>
+        <strong>Q6.</strong> Find names of students along with their department names.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π name, dept_name (Student ⋈ Department)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT</span> s.name, d.dept_name
+<span class="keyword">FROM</span> student s <span class="keyword">JOIN</span> department d <span class="keyword">ON</span> s.dept_id = d.dept_id;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-med">MEDIUM</span>
+        <strong>Q7.</strong> Find EC department students who have enrolled in any course.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π name (σ dept_id=1 (Student) ⋈ Enrollment)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT DISTINCT</span> s.name <span class="keyword">FROM</span> student s
+<span class="keyword">JOIN</span> enrollment e <span class="keyword">ON</span> s.roll_no = e.roll_no
+<span class="keyword">WHERE</span> s.dept_id = 1;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-med">MEDIUM</span>
+        <strong>Q8.</strong> Find course names and names of students enrolled in them.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π course_name, name (Course ⋈ Enrollment ⋈ Student)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT DISTINCT</span> c.course_name, s.name
+<span class="keyword">FROM</span> course c
+<span class="keyword">JOIN</span> enrollment e <span class="keyword">ON</span> c.course_id = e.course_id
+<span class="keyword">JOIN</span> student s <span class="keyword">ON</span> e.roll_no = s.roll_no;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-med">MEDIUM</span>
+        <strong>Q9.</strong> Find students enrolled in course 'EC301'.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π name (σ course_code='EC301' (Course) ⋈ Enrollment ⋈ Student)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT DISTINCT</span> s.name <span class="keyword">FROM</span> student s
+<span class="keyword">JOIN</span> enrollment e <span class="keyword">ON</span> s.roll_no = e.roll_no
+<span class="keyword">JOIN</span> course c <span class="keyword">ON</span> e.course_id = c.course_id
+<span class="keyword">WHERE</span> c.course_code = <span class="string">'EC301'</span>;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-med">MEDIUM</span>
+        <strong>Q10.</strong> Find students who have NOT enrolled in any course.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π roll_no, name (Student) − π roll_no, name (Student ⋈ Enrollment)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT</span> roll_no, name <span class="keyword">FROM</span> student
+<span class="keyword">EXCEPT</span>
+<span class="keyword">SELECT</span> s.roll_no, s.name <span class="keyword">FROM</span> student s
+<span class="keyword">JOIN</span> enrollment e <span class="keyword">ON</span> s.roll_no = e.roll_no;
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 14: Problems 11-15 -->
+<div class="slide">
+    <h1>📝 Practice Problems 11-15 (Level: Hard)</h1>
+    <p class="subtitle">Set operations and outer joins</p>
+
+    <div class="op-card">
+        <span class="level-tag level-hard">HARD</span>
+        <strong>Q11.</strong> Find students enrolled in BOTH 'EC301' AND 'EC302'.
+        <div class="ra-expr" style="font-size:0.85em; margin-top:8px;">π name(σ code='EC301'(Course)⋈Enrollment⋈Student) ∩ π name(σ code='EC302'(Course)⋈Enrollment⋈Student)</div>
+        <div class="code-block" style="font-size:0.8em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT</span> s.name <span class="keyword">FROM</span> student s <span class="keyword">JOIN</span> enrollment e <span class="keyword">ON</span> s.roll_no=e.roll_no
+<span class="keyword">JOIN</span> course c <span class="keyword">ON</span> e.course_id=c.course_id <span class="keyword">WHERE</span> c.course_code=<span class="string">'EC301'</span>
+<span class="keyword">INTERSECT</span>
+<span class="keyword">SELECT</span> s.name <span class="keyword">FROM</span> student s <span class="keyword">JOIN</span> enrollment e <span class="keyword">ON</span> s.roll_no=e.roll_no
+<span class="keyword">JOIN</span> course c <span class="keyword">ON</span> e.course_id=c.course_id <span class="keyword">WHERE</span> c.course_code=<span class="string">'EC302'</span>;
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-hard">HARD</span>
+        <strong>Q12.</strong> Find students in 'EC301' but NOT in 'EC302'.
+        <div class="ra-expr" style="font-size:0.85em; margin-top:8px;">π name(σ code='EC301'(Course)⋈Enrollment⋈Student) − π name(σ code='EC302'(Course)⋈Enrollment⋈Student)</div>
+        <div class="code-block" style="font-size:0.8em; padding:12px; margin-top:8px;">
+<span class="comment">-- Use EXCEPT (or NOT EXISTS / NOT IN)</span>
+        </div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-hard">HARD</span>
+        <strong>Q13.</strong> Find departments with no students.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π dept_id, dept_name (Department) − π dept_id, dept_name (Department ⋈ Student)</div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-hard">HARD</span>
+        <strong>Q14.</strong> Find HOD names and their students' names.
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π hod_name, name (Department ⋈ Student)</div>
+    </div>
+
+    <div class="op-card">
+        <span class="level-tag level-hard">HARD</span>
+        <strong>Q15.</strong> Find all students and their dept names (including students without dept).
+        <div class="ra-expr" style="font-size:0.9em; margin-top:8px;">π name, dept_name (Student ⟕ Department)</div>
+        <div class="code-block" style="font-size:0.85em; padding:12px; margin-top:8px;">
+<span class="keyword">SELECT</span> s.name, d.dept_name
+<span class="keyword">FROM</span> student s <span class="keyword">LEFT JOIN</span> department d <span class="keyword">ON</span> s.dept_id = d.dept_id;
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 15: Assignment -->
+<div class="slide">
+    <h1>📝 Session 3 Assignment</h1>
+    <p class="subtitle">Complete before Session 4 (ER Model)</p>
+
+    <h3>Theory (10 Questions)</h3>
+    <ol>
+        <li>What is Relational Algebra? Why is it called "procedural"?</li>
+        <li>Explain the difference between Select (σ) and Project (π) with examples.</li>
+        <li>What is "union-compatibility"? Give an example of non-compatible relations.</li>
+        <li>Write RA for: "Find names of all male students with CGPA > 8.0"</li>
+        <li>Why is Cartesian Product rarely used alone? What do we combine it with?</li>
+        <li>Differentiate Natural Join, Equi Join, and Theta Join.</li>
+        <li>What's the difference between Left Outer and Right Outer Join?</li>
+        <li>Prove: R ∩ S = R − (R − S)</li>
+        <li>Write RA for: "Students in CS201 but not in EC301"</li>
+        <li>Is Project commutative? Justify.</li>
+    </ol>
+
+    <h3>Practical</h3>
+    <ol>
+        <li>Ensure College DB from Session 2 has data</li>
+        <li>Write SQL for ALL 15 problems above</li>
+        <li>Execute each query and verify output</li>
+        <li>Note row count for each query</li>
+        <li>Create document: RA | SQL | Screenshot | Row Count</li>
+    </ol>
+
+    <div class="highlight-box">
+        <strong>Reading for Session 4:</strong> Entity-Relationship Model — Entities, Attributes, Relationships, ER Diagrams
+    </div>
+</div>
+
+<!-- SLIDE 16: Quiz -->
+<div class="slide">
+    <h1>🎓 Quick Quiz (5 Questions)</h1>
+    <div class="two-col">
+        <div>
+            <div class="op-card">
+                <h4>Q1. Horizontal Subset</h4>
+                <p style="font-size:0.9em;">Which operation filters rows?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:6px;">A: Select (σ)</p>
+            </div>
+            <div class="op-card">
+                <h4>Q2. Duplicate Removal</h4>
+                <p style="font-size:0.9em;">Which operation removes duplicate tuples?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:6px;">A: Project (π)</p>
+            </div>
+            <div class="op-card">
+                <h4>Q3. Union Compatibility</h4>
+                <p style="font-size:0.9em;">Minimum requirement for R ∪ S?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:6px;">A: Same degree + same domains</p>
+            </div>
+        </div>
+        <div>
+            <div class="op-card">
+                <h4>Q4. Set Difference</h4>
+                <p style="font-size:0.9em;">What does R − S return?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:6px;">A: Tuples in R but NOT in S</p>
+            </div>
+            <div class="op-card">
+                <h4>Q5. Natural vs Equi</h4>
+                <p style="font-size:0.9em;">What's the key difference?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:6px;">A: Natural Join removes duplicate columns; Equi Join keeps them</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 17: What's Next -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size:1.2em;">Session 4: Entity-Relationship Model</p>
+        <div style="margin: 30px auto; max-width: 600px; text-align: left;">
+            <div class="highlight-box">
+                <strong>Topics:</strong><br>
+                • Entities, Attributes (Simple, Composite, Multivalued, Derived)<br>
+                • Relationships (1:1, 1:N, M:N)<br>
+                • Weak Entities, ER-to-Relational Mapping<br>
+                • <strong>Practical:</strong> Design ER Diagrams using draw.io<br>
+                • <strong>Bring:</strong> Pencil and eraser for diagram drawing!
+            </div>
+        </div>
+        <p style="color: #718096; margin-top: 30px;">Tomorrow | Same Time | Unit II Begins!</p>
+    </div>
+    <div class="footer">
+        DBMS Course for EC 2nd Year | Session 3 Complete | Unit I — Relational Algebra
+    </div>
+</div>
+
+</body>
+</html>

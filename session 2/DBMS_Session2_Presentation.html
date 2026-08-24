@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 2 - Keys & Constraints</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.red { background: #e53e3e; }
+        .badge.purple { background: #805ad5; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .error-box { background: #fff5f5; border-left: 5px solid #e53e3e; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .code-block .comment { color: #68d391; }
+        .code-block .keyword { color: #63b3ed; }
+        .code-block .string { color: #f6ad55; }
+        .code-block .error { color: #fc8181; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .key-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .key-card h4 { color: #0369a1; margin-bottom: 8px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge green">SESSION 2</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Relational Model, Keys & Integrity Constraints</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit I | Duration: 2 Hours | Prerequisites: MySQL Installed</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">Super Key</span>
+            <span class="badge">Candidate Key</span>
+            <span class="badge">Primary Key</span>
+            <span class="badge">Foreign Key</span>
+            <span class="badge">Composite Key</span>
+            <span class="badge purple">Integrity Constraints</span>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 2: Learning Objectives -->
+<div class="slide">
+    <h1>🎯 Learning Objectives</h1>
+    <p class="subtitle">By the end of this session, you will be able to:</p>
+    <div class="two-col">
+        <div>
+            <div class="key-card">
+                <h4>🔑 Key Mastery</h4>
+                <ul>
+                    <li>Identify Super, Candidate, Primary, Alternate, Foreign & Composite Keys</li>
+                    <li>Choose the right primary key for any table</li>
+                    <li>Understand key hierarchy and relationships</li>
+                </ul>
+            </div>
+            <div class="key-card">
+                <h4>🛡️ Constraints</h4>
+                <ul>
+                    <li>Apply Entity, Referential & Domain integrity</li>
+                    <li>Use CHECK, NOT NULL, UNIQUE, DEFAULT</li>
+                    <li>Handle ON DELETE / ON UPDATE rules</li>
+                </ul>
+            </div>
+        </div>
+        <div>
+            <div class="key-card">
+                <h4>💻 Practical Skills</h4>
+                <ul>
+                    <li>Build multi-table schema with relationships</li>
+                    <li>Create tables with all constraint types</li>
+                    <li>Test constraint violations & read error messages</li>
+                </ul>
+            </div>
+            <div class="key-card">
+                <h4>📋 Assessment</h4>
+                <ul>
+                    <li>5-question live quiz</li>
+                    <li>Lab challenge: Complete College DB</li>
+                    <li>Assignment: Add faculty, exam, result tables</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 3: Time Breakdown -->
+<div class="slide">
+    <h1>⏱️ Session Timeline (120 Minutes)</h1>
+    <table>
+        <tr><th>Time</th><th>Topic</th><th>Mode</th></tr>
+        <tr><td>0:00 - 0:05</td><td>Recap of Session 1 + Assignment Review</td><td>Interactive</td></tr>
+        <tr style="background:#c6f6d5;"><td>0:05 - 0:30</td><td><strong>Types of Keys</strong> — Super, Candidate, Primary, Alternate, Foreign, Composite</td><td>Theory + Whiteboard</td></tr>
+        <tr style="background:#c6f6d5;"><td>0:30 - 0:50</td><td><strong>Integrity Constraints</strong> — Entity, Referential, Domain, User-defined</td><td>Theory + Examples</td></tr>
+        <tr><td>0:50 - 1:00</td><td>☕ BREAK</td><td>—</td></tr>
+        <tr><td>1:00 - 1:20</td><td>Relational Model Properties & Schema vs Instance</td><td>Theory</td></tr>
+        <tr style="background:#fef3c7;"><td>1:20 - 1:50</td><td><strong>HANDS-ON:</strong> Build "College Management System" with all keys & constraints</td><td>Practical</td></tr>
+        <tr><td>1:50 - 2:00</td><td>Quiz + Assignment + Q&A</td><td>Interactive</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 4: Why Keys -->
+<div class="slide">
+    <h1>🔑 Why Do We Need Keys?</h1>
+    <div class="highlight-box">
+        <strong>Definition:</strong> Keys are attributes (or sets of attributes) that <strong>uniquely identify</strong> tuples (rows) in a relation. They are the foundation of database integrity.
+    </div>
+    <div class="two-col">
+        <div>
+            <h3>Real-World Analogy</h3>
+            <div class="diagram" style="text-align:left; font-size:0.95em;">
+🏫 College Scenario:
+┌─────────────────────────────────────┐
+│  Roll No: 101 → Rahul Verma        │
+│  Roll No: 102 → Priya Sharma       │
+│  Roll No: 103 → Amit Patel         │
+└─────────────────────────────────────┘
+
+Roll Number = KEY
+→ Uniquely identifies YOU
+  among 1000s of students
+            </div>
+        </div>
+        <div>
+            <h3>Without Keys = Chaos</h3>
+            <div class="error-box">
+                ❌ Two students with same roll_no<br>
+                ❌ Cannot tell who got which marks<br>
+                ❌ Cannot link enrollment to student<br>
+                ❌ Data becomes unreliable
+            </div>
+            <div class="success-box">
+                ✅ With Primary Key:<br>
+                Every row has a unique identity<br>
+                Relationships work perfectly<br>
+                Data integrity is maintained
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 5: Key Hierarchy -->
+<div class="slide">
+    <h1>🏗️ Key Hierarchy</h1>
+    <div class="diagram" style="font-size:1.05em;">
+┌─────────────────────────────────────────────────────────────┐
+│                   ALL POSSIBLE COMBINATIONS                  │
+│         (Every attribute set you can think of)              │
+├─────────────────────────────────────────────────────────────┤
+│                      SUPER KEYS                              │
+│    (Sets that ACTUALLY uniquely identify a row)             │
+│    Ex: {roll_no}, {email}, {roll_no,name}, {all_attrs}      │
+├─────────────────────────────────────────────────────────────┤
+│                   CANDIDATE KEYS                             │
+│    (Minimal Super Keys — NO extra attributes)               │
+│    Ex: {roll_no}, {email}, {aadhar}                         │
+├──────────────────────────┬──────────────────────────────────┤
+│     PRIMARY KEY          │      ALTERNATE KEYS              │
+│  (Chosen by designer)    │  (Other candidate keys)         │
+│  Only ONE per table      │  Implemented as UNIQUE          │
+│  Ex: roll_no             │  Ex: email, aadhar              │
+└──────────────────────────┴──────────────────────────────────┘
+    </div>
+    <div class="warning-box">
+        <strong>Memory Trick:</strong> Super → Candidate → Primary<br>
+        <em>"Superman is a candidate for president, but only ONE can be primary."</em>
+    </div>
+</div>
+
+<!-- SLIDE 6: Super Key vs Candidate Key -->
+<div class="slide">
+    <h1>📊 Super Key vs Candidate Key</h1>
+    <p class="subtitle">STUDENT(roll_no, name, email, phone, aadhar_no)</p>
+    <div class="two-col">
+        <div class="key-card" style="border-color: #f6ad55;">
+            <h4 style="color: #c05621;">🔶 SUPER KEYS</h4>
+            <p style="font-size:0.9em; color:#4a5568; margin-bottom:10px;">"Can uniquely identify, but might be overkill"</p>
+            <ul>
+                <li>{roll_no} ✅</li>
+                <li>{email} ✅</li>
+                <li>{aadhar_no} ✅</li>
+                <li>{roll_no, name} ✅ <em>(extra attr)</em></li>
+                <li>{roll_no, email} ✅ <em>(extra attr)</em></li>
+                <li>{all attributes} ✅ <em>(definitely unique)</em></li>
+            </ul>
+            <p style="color: #718096; font-size:0.85em; margin-top:10px;">Count: Many possible super keys</p>
+        </div>
+        <div class="key-card" style="border-color: #38a169;">
+            <h4 style="color: #276749;">🟢 CANDIDATE KEYS</h4>
+            <p style="font-size:0.9em; color:#4a5568; margin-bottom:10px;">"The SMALLEST possible set that still works"</p>
+            <ul>
+                <li>{roll_no} ✅ <em>(minimal)</em></li>
+                <li>{email} ✅ <em>(minimal)</em></li>
+                <li>{aadhar_no} ✅ <em>(minimal)</em></li>
+            </ul>
+            <div class="error-box" style="margin-top:15px; font-size:0.9em;">
+                ❌ {roll_no, name} — name is redundant<br>
+                ❌ {roll_no, email} — email is redundant<br>
+                ❌ {all attributes} — way too many
+            </div>
+            <p style="color: #718096; font-size:0.85em; margin-top:10px;">Count: Few, minimal sets only</p>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 7: Primary Key -->
+<div class="slide">
+    <h1>⭐ Primary Key (PK)</h1>
+    <div class="highlight-box">
+        The <strong>Candidate Key</strong> chosen by the database designer to be the <strong>main unique identifier</strong> for a relation.
+    </div>
+    <h3>5 Golden Rules of Primary Key</h3>
+    <table>
+        <tr><th>Rule</th><th>Explanation</th><th>Why It Matters</th></tr>
+        <tr><td>1. UNIQUE</td><td>No two rows can have same PK</td><td>Ensures every row is identifiable</td></tr>
+        <tr><td>2. NOT NULL</td><td>Every row MUST have a PK</td><td>Entity Integrity — no ghost rows</td></tr>
+        <tr><td>3. Only ONE</td><td>Each table has exactly one PK</td><td>Single source of identity</td></tr>
+        <tr><td>4. STABLE</td><td>Should rarely change</td><td>References won't break</td></tr>
+        <tr><td>5. SIMPLE</td><td>Prefer single attribute</td><td>Easier to use in joins & indexes</td></tr>
+    </table>
+    <div class="success-box">
+        <strong>Example:</strong> Candidate Keys = {roll_no}, {email}, {aadhar_no}<br>
+        <strong>Designer chooses:</strong> <code>roll_no</code> as PK<br>
+        <strong>Why not email?</strong> Student might switch providers → email changes → PK changes → all references break!
+    </div>
+</div>
+
+<!-- SLIDE 8: Foreign Key -->
+<div class="slide">
+    <h1>🔗 Foreign Key (FK)</h1>
+    <div class="highlight-box">
+        An attribute in one table that <strong>references the Primary Key</strong> of another table. It creates relationships between tables.
+    </div>
+    <div class="diagram">
+┌─────────────────────────┐         ┌─────────────────────────┐
+│      DEPARTMENT         │         │       STUDENT           │
+├─────────────────────────┤         ├─────────────────────────┤
+│ PK  dept_id             │◄────────┤ FK  dept_id             │
+│     dept_name           │  Links  │ PK  roll_no             │
+│     location            │         │     name                │
+└─────────────────────────┘         │     email               │
+    PARENT TABLE                    └─────────────────────────┘
+                                    CHILD TABLE
+    </div>
+    <h3>Foreign Key Rules</h3>
+    <div class="two-col">
+        <div>
+            <div class="success-box">
+                <strong>✅ Valid Operations:</strong><br>
+                • Insert student with dept_id = 1 (if dept 1 exists)<br>
+                • Insert student with dept_id = NULL (orphan allowed)<br>
+                • Update student's dept_id to existing dept
+            </div>
+        </div>
+        <div>
+            <div class="error-box">
+                <strong>❌ Invalid Operations:</strong><br>
+                • Insert student with dept_id = 99 (doesn't exist)<br>
+                • Delete department that has students (without CASCADE)<br>
+                • Update dept_id to non-existent department
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 9: ON DELETE / ON UPDATE -->
+<div class="slide">
+    <h1>⚡ ON DELETE / ON UPDATE Options</h1>
+    <p class="subtitle">What happens to child rows when parent changes?</p>
+    <table>
+        <tr><th>Option</th><th>Behavior</th><th>When to Use</th></tr>
+        <tr><td><code>CASCADE</code></td><td>Automatically delete/update child rows</td><td>Enrollment records when course deleted</td></tr>
+        <tr><td><code>SET NULL</code></td><td>Set FK to NULL</td><td>Student dept when department restructured</td></tr>
+        <tr><td><code>RESTRICT</code></td><td>Prevent parent deletion/update</td><td>Prevent deleting department with students</td></tr>
+        <tr><td><code>NO ACTION</code></td><td>Same as RESTRICT</td><td>Default behavior</td></tr>
+    </table>
+    <div class="code-block">
+<span class="comment">-- Example: If department deleted, set student's dept to NULL</span>
+<span class="keyword">FOREIGN KEY</span> (dept_id) <span class="keyword">REFERENCES</span> department(dept_id)
+    <span class="keyword">ON DELETE SET NULL</span>
+    <span class="keyword">ON UPDATE CASCADE</span>
+
+<span class="comment">-- Example: If course deleted, delete all enrollments too</span>
+<span class="keyword">FOREIGN KEY</span> (course_id) <span class="keyword">REFERENCES</span> course(course_id)
+    <span class="keyword">ON DELETE CASCADE</span>
+    </div>
+</div>
+
+<!-- SLIDE 10: Composite Key -->
+<div class="slide">
+    <h1>🧩 Composite Key</h1>
+    <div class="highlight-box">
+        A primary key made of <strong>two or more attributes</strong> together. Used when no single column is unique enough.
+    </div>
+    <h3>Example: ENROLLMENT Table</h3>
+    <div class="diagram">
+ENROLLMENT(roll_no, course_id, grade, enrollment_date)
+
+roll_no alone?     ❌ (student takes multiple courses)
+course_id alone?   ❌ (multiple students in one course)
+grade alone?       ❌ (many students get same grade)
+
+{roll_no, course_id}?  ✅ 
+  → Student 101 + Course 1 = Unique enrollment
+  → Student 101 + Course 2 = Different enrollment
+  → Student 102 + Course 1 = Different enrollment
+    </div>
+    <div class="code-block">
+<span class="keyword">CREATE TABLE</span> enrollment (
+    roll_no <span class="keyword">INT</span>,
+    course_id <span class="keyword">INT</span>,
+    grade <span class="keyword">CHAR</span>(2),
+    <span class="keyword">PRIMARY KEY</span> (roll_no, course_id),  <span class="comment">-- Composite Key</span>
+    <span class="keyword">FOREIGN KEY</span> (roll_no) <span class="keyword">REFERENCES</span> student(roll_no),
+    <span class="keyword">FOREIGN KEY</span> (course_id) <span class="keyword">REFERENCES</span> course(course_id)
+);
+    </div>
+</div>
+
+<!-- SLIDE 11: Integrity Constraints -->
+<div class="slide">
+    <h1>🛡️ Integrity Constraints</h1>
+    <p class="subtitle">Rules that ensure accuracy, consistency, and reliability of data</p>
+    <div class="two-col">
+        <div class="key-card" style="border-color: #e53e3e;">
+            <h4 style="color: #c53030;">🔴 Entity Integrity</h4>
+            <p style="font-size:0.9em;">Primary Key cannot be NULL</p>
+            <div class="code-block" style="font-size:0.85em; padding:12px;">
+<span class="comment">-- This FAILS:</span>
+<span class="keyword">INSERT INTO</span> student <span class="keyword">VALUES</span> 
+(<span class="keyword">NULL</span>, <span class="string">'Rahul'</span>, ...);
+<span class="error">ERROR: PK cannot be null!</span>
+            </div>
+        </div>
+        <div class="key-card" style="border-color: #3182ce;">
+            <h4 style="color: #2b6cb0;">🔵 Referential Integrity</h4>
+            <p style="font-size:0.9em;">FK must match PK or be NULL</p>
+            <div class="code-block" style="font-size:0.85em; padding:12px;">
+<span class="comment">-- This FAILS:</span>
+<span class="keyword">INSERT INTO</span> student <span class="keyword">VALUES</span> 
+(105, <span class="string">'X'</span>, ..., 99);
+<span class="error">ERROR: dept_id 99 doesn't exist!</span>
+            </div>
+        </div>
+    </div>
+    <div class="key-card" style="border-color: #38a169; max-width: 48%; margin: 10px auto;">
+        <h4 style="color: #276749;">🟢 Domain Integrity</h4>
+        <p style="font-size:0.9em;">Values must be from specified domain</p>
+        <div class="code-block" style="font-size:0.85em; padding:12px;">
+<span class="comment">-- This FAILS:</span>
+<span class="keyword">INSERT INTO</span> student <span class="keyword">VALUES</span> 
+(..., 15.0, ...);
+<span class="error">ERROR: cgpa must be 0-10!</span>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 12: MySQL Constraints -->
+<div class="slide">
+    <h1>⚙️ MySQL Constraints Cheat Sheet</h1>
+    <table>
+        <tr><th>Constraint</th><th>Purpose</th><th>Syntax Example</th></tr>
+        <tr><td><strong>NOT NULL</strong></td><td>Column cannot be empty</td><td><code>name VARCHAR(50) NOT NULL</code></td></tr>
+        <tr><td><strong>UNIQUE</strong></td><td>All values must be different</td><td><code>email VARCHAR(50) UNIQUE</code></td></tr>
+        <tr><td><strong>PRIMARY KEY</strong></td><td>Uniquely identifies row (NOT NULL + UNIQUE)</td><td><code>roll_no INT PRIMARY KEY</code></td></tr>
+        <tr><td><strong>FOREIGN KEY</strong></td><td>Links to another table's PK</td><td><code>FOREIGN KEY (d_id) REFERENCES dept(d_id)</code></td></tr>
+        <tr><td><strong>CHECK</strong></td><td>Values must satisfy condition</td><td><code>marks INT CHECK (marks >= 0)</code></td></tr>
+        <tr><td><strong>DEFAULT</strong></td><td>Auto-set value if none given</td><td><code>date DATE DEFAULT CURRENT_DATE</code></td></tr>
+        <tr><td><strong>AUTO_INCREMENT</strong></td><td>Auto-generates sequential numbers</td><td><code>id INT AUTO_INCREMENT PRIMARY KEY</code></td></tr>
+    </table>
+    <div class="warning-box">
+        <strong>💡 Pro Tip:</strong> In MySQL 8.0+, CHECK constraints are enforced. In older versions, they were parsed but ignored — use triggers as a workaround.
+    </div>
+</div>
+
+<!-- SLIDE 13: Hands-On -->
+<div class="slide">
+    <h1>🔧 Hands-On: College Management System</h1>
+    <p class="subtitle">Build a complete multi-table database with all key types & constraints</p>
+    <div class="diagram" style="font-size:0.9em;">
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   DEPARTMENT    │◄────│    STUDENT      │     │     COURSE      │
+│ PK dept_id      │     │ PK roll_no      │     │ PK course_id    │
+│    dept_name(U) │     │    name(NN)     │     │    course_code  │
+│    location(D)  │     │    email(U,NN)  │     │    credits(CK)  │
+│    hod_name     │     │    gender(CK)   │     │    semester(CK) │
+│    year(CK)     │     │    cgpa(CK)     │     │ FK dept_id      │◄──┐
+└─────────────────┘     │ FK dept_id      │     └─────────────────┘   │
+                        └─────────────────┘                             │
+                              ▲                                       │
+                              │                                       │
+                        ┌─────────────────┐                           │
+                        │   ENROLLMENT    │                           │
+                        │ CK roll_no ─────┼───────────────────────────┘
+                        │ CK course_id ───┼───────────────────────────┐
+                        │ CK semester(CK) │                           │
+                        │    grade(CK)    │                           │
+                        └─────────────────┘                           │
+                              │                                       │
+                              ▼                                       │
+                        FK references ────────────────────────────────┘
+    </div>
+    <p style="text-align:center; color:#4a5568; font-size:0.9em; margin-top:10px;">
+        PK = Primary Key | CK = Composite Key / CHECK | FK = Foreign Key | U = UNIQUE | NN = NOT NULL | D = DEFAULT
+    </p>
+</div>
+
+<!-- SLIDE 14: SQL Code -->
+<div class="slide">
+    <h1>💻 SQL: Create Tables</h1>
+    <div class="code-block">
+<span class="comment">-- Step 1: Create Database</span>
+<span class="keyword">DROP DATABASE IF EXISTS</span> college_mgmt;
+<span class="keyword">CREATE DATABASE</span> college_mgmt;
+<span class="keyword">USE</span> college_mgmt;
+
+<span class="comment">-- Step 2: DEPARTMENT (Parent Table)</span>
+<span class="keyword">CREATE TABLE</span> department (
+    dept_id <span class="keyword">INT PRIMARY KEY</span>,
+    dept_name <span class="keyword">VARCHAR</span>(50) <span class="keyword">NOT NULL UNIQUE</span>,
+    location <span class="keyword">VARCHAR</span>(50) <span class="keyword">DEFAULT</span> <span class="string">'Main Building'</span>,
+    hod_name <span class="keyword">VARCHAR</span>(50),
+    established_year <span class="keyword">INT CHECK</span> (established_year >= 1950)
+);
+
+<span class="comment">-- Step 3: STUDENT (Child Table)</span>
+<span class="keyword">CREATE TABLE</span> student (
+    roll_no <span class="keyword">INT PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(50) <span class="keyword">NOT NULL</span>,
+    email <span class="keyword">VARCHAR</span>(50) <span class="keyword">UNIQUE NOT NULL</span>,
+    phone <span class="keyword">VARCHAR</span>(15),
+    dob <span class="keyword">DATE</span>,
+    gender <span class="keyword">CHAR</span>(1) <span class="keyword">CHECK</span> (gender <span class="keyword">IN</span> (<span class="string">'M'</span>, <span class="string">'F'</span>, <span class="string">'O'</span>)),
+    dept_id <span class="keyword">INT</span>,
+    admission_date <span class="keyword">DATE DEFAULT</span> CURRENT_DATE,
+    cgpa <span class="keyword">DECIMAL</span>(3,2) <span class="keyword">CHECK</span> (cgpa >= 0.00 <span class="keyword">AND</span> cgpa <= 10.00),
+    <span class="keyword">FOREIGN KEY</span> (dept_id) <span class="keyword">REFERENCES</span> department(dept_id)
+        <span class="keyword">ON DELETE SET NULL ON UPDATE CASCADE</span>
+);
+    </div>
+</div>
+
+<!-- SLIDE 15: More SQL -->
+<div class="slide">
+    <h1>💻 SQL: Enrollment & Data</h1>
+    <div class="code-block">
+<span class="comment">-- Step 4: COURSE</span>
+<span class="keyword">CREATE TABLE</span> course (
+    course_id <span class="keyword">INT PRIMARY KEY</span>,
+    course_code <span class="keyword">VARCHAR</span>(10) <span class="keyword">UNIQUE NOT NULL</span>,
+    course_name <span class="keyword">VARCHAR</span>(100) <span class="keyword">NOT NULL</span>,
+    credits <span class="keyword">INT CHECK</span> (credits <span class="keyword">BETWEEN</span> 1 <span class="keyword">AND</span> 6),
+    semester <span class="keyword">INT CHECK</span> (semester <span class="keyword">BETWEEN</span> 1 <span class="keyword">AND</span> 8),
+    dept_id <span class="keyword">INT</span>,
+    <span class="keyword">FOREIGN KEY</span> (dept_id) <span class="keyword">REFERENCES</span> department(dept_id)
+        <span class="keyword">ON DELETE CASCADE</span>
+);
+
+<span class="comment">-- Step 5: ENROLLMENT (Composite Key!)</span>
+<span class="keyword">CREATE TABLE</span> enrollment (
+    roll_no <span class="keyword">INT</span>,
+    course_id <span class="keyword">INT</span>,
+    semester <span class="keyword">INT CHECK</span> (semester <span class="keyword">BETWEEN</span> 1 <span class="keyword">AND</span> 8),
+    grade <span class="keyword">CHAR</span>(2) <span class="keyword">CHECK</span> (grade <span class="keyword">IN</span> (<span class="string">'AA'</span>, <span class="string">'AB'</span>, <span class="string">'BB'</span>, <span class="string">'BC'</span>, <span class="string">'CC'</span>, <span class="string">'CD'</span>, <span class="string">'DD'</span>, <span class="string">'FF'</span>)),
+    enrollment_date <span class="keyword">DATE DEFAULT</span> CURRENT_DATE,
+    <span class="keyword">PRIMARY KEY</span> (roll_no, course_id, semester),
+    <span class="keyword">FOREIGN KEY</span> (roll_no) <span class="keyword">REFERENCES</span> student(roll_no) <span class="keyword">ON DELETE CASCADE</span>,
+    <span class="keyword">FOREIGN KEY</span> (course_id) <span class="keyword">REFERENCES</span> course(course_id) <span class="keyword">ON DELETE CASCADE</span>
+);
+    </div>
+    <div class="warning-box">
+        <strong>🎯 Lab Challenge:</strong> Add <code>faculty</code>, <code>exam</code>, and <code>result</code> tables. Try to violate each constraint and observe the error messages!
+    </div>
+</div>
+
+<!-- SLIDE 16: Constraint Violations -->
+<div class="slide">
+    <h1>🧪 Test Your Constraints!</h1>
+    <p class="subtitle">Try these — they should ALL fail. Learn from the errors.</p>
+    <div class="code-block">
+<span class="comment">-- Test 1: Duplicate Primary Key</span>
+<span class="keyword">INSERT INTO</span> student (roll_no, name, email) <span class="keyword">VALUES</span> 
+(101, <span class="string">'Duplicate'</span>, <span class="string">'dup@college.edu'</span>);
+<span class="error">ERROR: Duplicate entry '101' for key 'student.PRIMARY'</span>
+
+<span class="comment">-- Test 2: NULL Primary Key</span>
+<span class="keyword">INSERT INTO</span> student (roll_no, name, email) <span class="keyword">VALUES</span> 
+(<span class="keyword">NULL</span>, <span class="string">'NoID'</span>, <span class="string">'noid@college.edu'</span>);
+<span class="error">ERROR: Column 'roll_no' cannot be null</span>
+
+<span class="comment">-- Test 3: Duplicate Alternate Key (email)</span>
+<span class="keyword">INSERT INTO</span> student (roll_no, name, email) <span class="keyword">VALUES</span> 
+(105, <span class="string">'SameEmail'</span>, <span class="string">'rahul.v@college.edu'</span>);
+<span class="error">ERROR: Duplicate entry 'rahul.v@college.edu' for key 'student.email'</span>
+
+<span class="comment">-- Test 4: Foreign Key Violation</span>
+<span class="keyword">INSERT INTO</span> student (roll_no, name, email, dept_id) <span class="keyword">VALUES</span> 
+(105, <span class="string">'WrongDept'</span>, <span class="string">'wrong@college.edu'</span>, 99);
+<span class="error">ERROR: Cannot add child row: foreign key constraint fails</span>
+
+<span class="comment">-- Test 5: CHECK Constraint Violation</span>
+<span class="keyword">INSERT INTO</span> student (roll_no, name, email, cgpa) <span class="keyword">VALUES</span> 
+(105, <span class="string">'BadCGPA'</span>, <span class="string">'bad@college.edu'</span>, 15.0);
+<span class="error">ERROR: CHECK constraint violation (cgpa must be 0-10)</span>
+    </div>
+</div>
+
+<!-- SLIDE 17: Assignment -->
+<div class="slide">
+    <h1>📝 Session 2 Assignment</h1>
+    <p class="subtitle">Complete before Session 3 (Relational Algebra)</p>
+
+    <h3>Theory (7 Questions)</h3>
+    <ol>
+        <li>What is the difference between Super Key and Candidate Key? Give an example.</li>
+        <li>Table: (student_id, name, email, phone, aadhar). Find all super keys, candidate keys, and choose PK with justification.</li>
+        <li>Explain the difference between Primary Key and Foreign Key with a real-world example.</li>
+        <li>What is a Composite Key? When is it necessary? Give an example.</li>
+        <li>Define the three main integrity constraints with examples.</li>
+        <li>What happens if you insert a row with a FK value that doesn't exist?</li>
+        <li>Explain <code>ON DELETE CASCADE</code> vs <code>ON DELETE SET NULL</code>.</li>
+    </ol>
+
+    <h3>Practical</h3>
+    <ol>
+        <li>Complete the College Management System on your laptop</li>
+        <li>Add <code>faculty</code> table (faculty_id PK, name NN, email U, salary CK, dept_id FK)</li>
+        <li>Add <code>exam</code> table (exam_id PK AI, course_id FK, exam_date, max_marks CK, type CK)</li>
+        <li>Add <code>result</code> table (roll_no, exam_id → Composite PK, marks CK, FKs)</li>
+        <li>Insert sample data in all tables</li>
+        <li>Write 5 JOIN queries</li>
+        <li>Document constraint violations & error messages</li>
+        <li>Screenshot DESCRIBE output for all tables</li>
+    </ol>
+
+    <div class="highlight-box">
+        <strong>Reading for Session 3:</strong> Relational Algebra — Select (σ), Project (π), Union, Set Difference, Cartesian Product, Joins (Natural, Equi, Theta)
+    </div>
+</div>
+
+<!-- SLIDE 18: Quick Quiz -->
+<div class="slide">
+    <h1>🎓 Quick Quiz (5 Questions)</h1>
+    <div class="two-col">
+        <div>
+            <div class="key-card">
+                <h4>Q1. Alternate Key</h4>
+                <p style="font-size:0.9em;">Table has unique emp_id, email, pan. emp_id is PK. What is email called?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:8px;">A: Alternate Key</p>
+            </div>
+            <div class="key-card">
+                <h4>Q2. NULL in PK?</h4>
+                <p style="font-size:0.9em;">Can a primary key contain NULL? Why?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:8px;">A: No — Entity Integrity requires PK to be NOT NULL</p>
+            </div>
+            <div class="key-card">
+                <h4>Q3. Composite Key</h4>
+                <p style="font-size:0.9em;">ENROLLMENT(roll_no, course_id, grade). Best PK?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:8px;">A: (roll_no, course_id) — Composite Key</p>
+            </div>
+        </div>
+        <div>
+            <div class="key-card">
+                <h4>Q4. Delete Department</h4>
+                <p style="font-size:0.9em;">What happens if you delete a dept with students (no CASCADE)?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:8px;">A: Error — Referential Integrity prevents it</p>
+            </div>
+            <div class="key-card">
+                <h4>Q5. Marks Constraint</h4>
+                <p style="font-size:0.9em;">What constraint ensures marks are between 0 and 100?</p>
+                <p style="color:#38a169; font-weight:600; margin-top:8px;">A: CHECK constraint (Domain Integrity)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 19: What's Next -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size:1.2em;">Session 3: Relational Algebra</p>
+        <div style="margin: 30px auto; max-width: 600px; text-align: left;">
+            <div class="highlight-box">
+                <strong>Topics:</strong><br>
+                • Select (σ), Project (π), Union (∪), Set Difference (−)<br>
+                • Cartesian Product (×), Natural Join (⋈), Equi Join, Theta Join<br>
+                • Mapping Relational Algebra to SQL<br>
+                • <strong>Practical:</strong> Solve 15 RA problems + write equivalent SQL
+            </div>
+        </div>
+        <p style="color: #718096; margin-top: 30px;">Tomorrow | Same Time | Bring pen & paper for RA problems!</p>
+    </div>
+    <div class="footer">
+        DBMS Course for EC 2nd Year | Session 2 Complete | Unit I — Relational Model
+    </div>
+</div>
+
+</body>
+</html>

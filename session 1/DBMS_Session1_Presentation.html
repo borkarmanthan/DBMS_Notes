@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Course - Session 1</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .code-block .comment { color: #68d391; }
+        .code-block .keyword { color: #63b3ed; }
+        .code-block .string { color: #f6ad55; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .timeline { display: flex; justify-content: space-between; margin: 20px 0; position: relative; }
+        .timeline::before { content: ''; position: absolute; top: 20px; left: 0; right: 0; height: 4px; background: #e2e8f0; }
+        .timeline-item { text-align: center; position: relative; z-index: 1; }
+        .timeline-dot { width: 40px; height: 40px; background: #3182ce; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 8px; }
+        .timeline-item.active .timeline-dot { background: #38a169; }
+        .timeline-item span { font-size: 0.85em; color: #4a5568; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="font-size: 2.8em; border: none;">📘 Database Management Systems</h1>
+        <p class="subtitle" style="font-size: 1.3em;">Complete Course for 2nd Year EC Engineering</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">30 Hours</span>
+            <span class="badge green">15 Sessions</span>
+            <span class="badge orange">2 Hrs/Day</span>
+            <span class="badge purple">Hands-On Focus</span>
+        </div>
+        <p style="color: #718096; margin-top: 30px;">Instructor Copy | Session 1 Ready</p>
+    </div>
+</div>
+
+<!-- SLIDE 2: Course Outcomes -->
+<div class="slide">
+    <h1>🎯 Course Outcomes</h1>
+    <p class="subtitle">At the end of this course, students will be able to:</p>
+    <table>
+        <tr><th>CO</th><th>Outcome</th><th>Assessment</th></tr>
+        <tr><td><strong>CO1</strong></td><td>Comprehend basic concepts of Database Systems, Architecture and Applications</td><td>Quiz + Assignment</td></tr>
+        <tr><td><strong>CO2</strong></td><td>Explain various file organizations, indexing techniques and hashing</td><td>Lab Test</td></tr>
+        <tr><td><strong>CO3</strong></td><td>Use SQL for database creation and interaction</td><td>SQL Practical Exam</td></tr>
+        <tr><td><strong>CO4</strong></td><td>Analyze query processing and optimization</td><td>Case Study</td></tr>
+        <tr><td><strong>CO5</strong></td><td>Design a complete database system from requirements</td><td>Mini Project</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 3: Schedule -->
+<div class="slide">
+    <h1>📅 15-Session Schedule (30 Hours)</h1>
+    <table>
+        <tr><th>Session</th><th>Topic</th><th>Unit</th><th>Practical Focus</th></tr>
+        <tr style="background:#c6f6d5;"><td><strong>1</strong></td><td>Intro to DBMS, Architecture, Data Models</td><td>I</td><td>Install MySQL + First Database</td></tr>
+        <tr><td><strong>2</strong></td><td>Relational Model, Keys, Constraints</td><td>I</td><td>Tables with PK, FK, CHECK</td></tr>
+        <tr><td><strong>3</strong></td><td>Relational Algebra</td><td>I</td><td>15 RA Problems + SQL Mapping</td></tr>
+        <tr><td><strong>4</strong></td><td>ER Model & Conceptual Design</td><td>II</td><td>Draw ER Diagrams (draw.io)</td></tr>
+        <tr><td><strong>5</strong></td><td>Functional Dependencies</td><td>II</td><td>Identify FDs + Decomposition</td></tr>
+        <tr><td><strong>6</strong></td><td>Normalization (1NF to BCNF)</td><td>II</td><td>Normalize Real-World Schemas</td></tr>
+        <tr><td><strong>7</strong></td><td>SQL - DDL, DML, DCL</td><td>III</td><td>Build "University DB"</td></tr>
+        <tr><td><strong>8</strong></td><td>SQL Queries, Aggregates, GROUP BY</td><td>III</td><td>30+ Complex Queries</td></tr>
+        <tr><td><strong>9</strong></td><td>Nested Queries & Joins</td><td>III</td><td>Multi-table Challenges</td></tr>
+        <tr><td><strong>10</strong></td><td>Views, NoSQL & MongoDB</td><td>III</td><td>Views + MongoDB CRUD</td></tr>
+        <tr><td><strong>11</strong></td><td>Storage, Buffer, File Organization</td><td>IV</td><td>Heap vs Sorted File Analysis</td></tr>
+        <tr><td><strong>12</strong></td><td>Indexing, Hashing, External Sort</td><td>IV</td><td>B-Tree Index Performance</td></tr>
+        <tr><td><strong>13</strong></td><td>Query Processing & Cost Estimation</td><td>V</td><td>EXPLAIN ANALYZE in SQL</td></tr>
+        <tr><td><strong>14</strong></td><td>Transactions & Concurrency Control</td><td>V</td><td>ACID Demo + Locking</td></tr>
+        <tr><td><strong>15</strong></td><td>Crash Recovery + Project Review</td><td>V</td><td>Log Analysis + Project Demo</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 4: Session 1 Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 40px 0;">
+        <span class="badge green">SESSION 1</span>
+        <h1 style="border:none; margin-top:15px;">Introduction to DBMS & Architecture</h1>
+        <p class="subtitle">Unit I | Duration: 2 Hours | Tomorrow</p>
+        <div class="timeline" style="margin-top:40px;">
+            <div class="timeline-item active"><div class="timeline-dot">1</div><span>File System<br>vs DBMS</span></div>
+            <div class="timeline-item active"><div class="timeline-dot">2</div><span>DBMS<br>Architecture</span></div>
+            <div class="timeline-item active"><div class="timeline-dot">3</div><span>Data<br>Models</span></div>
+            <div class="timeline-item active"><div class="timeline-dot">4</div><span>Levels of<br>Abstraction</span></div>
+            <div class="timeline-item active"><div class="timeline-dot">5</div><span>DBMS<br>Structure</span></div>
+            <div class="timeline-item active"><div class="timeline-dot">6</div><span>Relational<br>Model Intro</span></div>
+            <div class="timeline-item active"><div class="timeline-dot">7</div><span>Hands-On<br>MySQL Setup</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 5: File System vs DBMS -->
+<div class="slide">
+    <h1>📁 File System vs DBMS</h1>
+    <p class="subtitle">Why did we move from files to databases?</p>
+
+    <div class="highlight-box">
+        <strong>Real-World Scenario:</strong> A college maintains student data in Excel/CSV files across multiple departments.
+    </div>
+
+    <table>
+        <tr><th>Issue</th><th>File System Problem</th><th>DBMS Solution</th></tr>
+        <tr><td>🔴 <strong>Data Redundancy</strong></td><td>Same address stored in 5 different files</td><td>Normalization - store once, reference via ID</td></tr>
+        <tr><td>🔴 <strong>Inconsistency</strong></td><td>Update one file, others remain old</td><td>Single source of truth</td></tr>
+        <tr><td>🔴 <strong>Data Isolation</strong></td><td>Data scattered across files</td><td>Centralized storage with relationships</td></tr>
+        <tr><td>🔴 <strong>Atomicity</strong></td><td>Transfer fails → partial update</td><td>Transactions (all or nothing)</td></tr>
+        <tr><td>🔴 <strong>Concurrent Access</strong></td><td>Two users overwrite each other</td><td>Locking & Concurrency Control</td></tr>
+        <tr><td>🔴 <strong>Security</strong></td><td>File access = see everything</td><td>Role-based access control</td></tr>
+        <tr><td>🔴 <strong>Integrity</strong></td><td>Negative marks can be entered</td><td>Constraints (CHECK, NOT NULL)</td></tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>💬 Class Discussion (5 min):</strong> "Your college wants to build an attendance system. Excel files or DBMS? Why?"
+    </div>
+</div>
+
+<!-- SLIDE 6: What is DBMS -->
+<div class="slide">
+    <h1>🗄️ What is a Database & DBMS?</h1>
+
+    <div class="two-col">
+        <div>
+            <h3>Database</h3>
+            <div class="highlight-box">
+                An <strong>organized collection</strong> of logically related data stored together to serve multiple applications efficiently.
+            </div>
+        </div>
+        <div>
+            <h3>DBMS</h3>
+            <div class="highlight-box" style="border-left-color: #38a169;">
+                <strong>Software</strong> that enables users to create, maintain, and control access to databases. Acts as an interface between users and data.
+            </div>
+        </div>
+    </div>
+
+    <h3>Popular DBMS Examples</h3>
+    <table>
+        <tr><th>Type</th><th>Examples</th><th>Use Case</th></tr>
+        <tr><td>Relational (RDBMS)</td><td>MySQL, PostgreSQL, Oracle, SQL Server</td><td>Banking, E-commerce, ERP</td></tr>
+        <tr><td>NoSQL (Document)</td><td>MongoDB, CouchDB</td><td>Content management, Real-time analytics</td></tr>
+        <tr><td>NoSQL (Key-Value)</td><td>Redis, DynamoDB</td><td>Caching, Session storage</td></tr>
+        <tr><td>NoSQL (Column)</td><td>Cassandra, HBase</td><td>Big Data, Time-series</td></tr>
+        <tr><td>Embedded</td><td>SQLite</td><td>Mobile apps, Browsers</td></tr>
+    </table>
+
+    <div class="highlight-box">
+        <strong>🎯 Course Focus:</strong> Relational Model (MySQL) + Brief NoSQL (MongoDB)
+    </div>
+</div>
+
+<!-- SLIDE 7: Architecture -->
+<div class="slide">
+    <h1>🏗️ DBMS Architecture</h1>
+
+    <h3>1-Tier Architecture</h3>
+    <div class="diagram">┌─────────────────────────────────────┐
+│  Client + DBMS + Database          │
+│  (All on same machine)               │
+│  Example: SQLite, Local dev          │
+└─────────────────────────────────────┘</div>
+
+    <h3>2-Tier Architecture (Client-Server)</h3>
+    <div class="diagram">┌─────────────┐         ┌─────────────┐
+│   CLIENT    │◄───────►│   DATABASE  │
+│  (Desktop   │  SQL    │   SERVER    │
+│   App)      │         │  (MySQL)    │
+└─────────────┘         └─────────────┘</div>
+
+    <h3>3-Tier Architecture (Industry Standard)</h3>
+    <div class="diagram">┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   CLIENT    │────▶│  APP SERVER │────▶│   DATABASE  │
+│  (Browser)  │◄────│  (Business  │◄────│   SERVER    │
+│             │ HTTP  │   Logic)    │ SQL │             │
+└─────────────┘     └─────────────┘     └─────────────┘
+   Presentation        Application         Data
+      Layer               Layer            Layer</div>
+    <p style="text-align:center; color:#38a169; font-weight:600;">✅ Advantage: Separation of concerns, scalability, security</p>
+</div>
+
+<!-- SLIDE 8: Data Models -->
+<div class="slide">
+    <h1>📊 Data Models</h1>
+    <p class="subtitle">A collection of concepts for describing data, relationships, semantics, and constraints</p>
+
+    <table>
+        <tr><th>Model</th><th>Structure</th><th>Example DBMS</th><th>Best For</th></tr>
+        <tr><td><strong>Relational</strong></td><td>Tables (Rows & Columns)</td><td>MySQL, PostgreSQL</td><td>Structured data, ACID needs</td></tr>
+        <tr><td><strong>Entity-Relationship</strong></td><td>Entities, Attributes, Relationships</td><td>Design tool (draw.io)</td><td>Database design phase</td></tr>
+        <tr><td><strong>Document</strong></td><td>JSON-like documents</td><td>MongoDB</td><td>Flexible schemas, rapid dev</td></tr>
+        <tr><td><strong>Hierarchical</strong></td><td>Tree structure</td><td>IBM IMS</td><td>Legacy systems</td></tr>
+        <tr><td><strong>Network</strong></td><td>Graph structure</td><td>IDMS</td><td>Complex relationships</td></tr>
+        <tr><td><strong>Object-Oriented</strong></td><td>Objects & classes</td><td>db4o</td><td>OOP applications</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 9: Three Level Schema -->
+<div class="slide">
+    <h1>🔺 Three-Level Schema Architecture</h1>
+    <p class="subtitle">ANSI-SPARC Architecture - Provides Data Independence</p>
+
+    <div class="diagram" style="font-size:1.1em;">
+┌─────────────────────────────────────────┐
+│     EXTERNAL LEVEL (View Level)         │
+│  ┌─────────────┐    ┌─────────────┐    │
+│  │  User A     │    │  User B     │    │
+│  │  (Student   │    │  (Faculty   │    │
+│  │   view)     │    │   view)     │    │
+│  └─────────────┘    └─────────────┘    │
+├─────────────────────────────────────────┤
+│     CONCEPTUAL LEVEL (Logical)          │
+│     Tables, Constraints, Relationships    │
+│     "WHAT data is stored"               │
+├─────────────────────────────────────────┤
+│     INTERNAL LEVEL (Physical)           │
+│     B-trees, Hashing, Storage blocks    │
+│     "HOW data is stored"                │
+└─────────────────────────────────────────┘
+    </div>
+
+    <div class="two-col">
+        <div class="highlight-box">
+            <h3>Logical Data Independence</h3>
+            <p>Change conceptual schema without affecting external schemas</p>
+            <p style="font-size:0.9em; color:#4a5568;">Ex: Add column → Apps still work</p>
+        </div>
+        <div class="highlight-box" style="border-left-color: #38a169;">
+            <h3>Physical Data Independence</h3>
+            <p>Change internal schema without affecting conceptual schema</p>
+            <p style="font-size:0.9em; color:#4a5568;">Ex: Change index type → Tables unchanged</p>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 10: DBMS Structure -->
+<div class="slide">
+    <h1>⚙️ Structure of DBMS</h1>
+
+    <div class="diagram">
+┌────────────────────────────────────────────────────────────┐
+│                    USER / APPLICATION                       │
+└───────────────────────┬────────────────────────────────────┘
+                        │
+┌───────────────────────▼────────────────────────────────────┐
+│              QUERY PROCESSOR / INTERFACE LAYER             │
+│     Parser → Optimizer → Execution Engine                    │
+├────────────────────────────────────────────────────────────┤
+│              TRANSACTION MANAGER                             │
+│     Concurrency Control + Recovery Manager                  │
+├────────────────────────────────────────────────────────────┤
+│              STORAGE MANAGER                                 │
+│     File Manager + Buffer Manager + Index Manager           │
+├────────────────────────────────────────────────────────────┤
+│              DISK STORAGE                                    │
+│     Data Files + Index Files + Log Files + Catalog          │
+└────────────────────────────────────────────────────────────┘
+    </div>
+
+    <table>
+        <tr><th>Component</th><th>Function</th></tr>
+        <tr><td><strong>Query Processor</strong></td><td>Parses SQL, optimizes execution plan</td></tr>
+        <tr><td><strong>Transaction Manager</strong></td><td>Ensures ACID properties</td></tr>
+        <tr><td><strong>Concurrency Control</strong></td><td>Manages simultaneous access by multiple users</td></tr>
+        <tr><td><strong>Recovery Manager</strong></td><td>Handles crash recovery using logs</td></tr>
+        <tr><td><strong>Storage Manager</strong></td><td>Manages file organization on disk</td></tr>
+        <tr><td><strong>Buffer Manager</strong></td><td>Caches data in memory for fast access</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 11: Relational Model -->
+<div class="slide">
+    <h1>📐 Relational Model Introduction</h1>
+    <p class="subtitle">Proposed by <strong>E.F. Codd (IBM, 1970)</strong> - Father of Relational Databases</p>
+
+    <div class="highlight-box">
+        <strong>Core Idea:</strong> Data is organized as a collection of <strong>relations</strong> (tables)
+    </div>
+
+    <h3>Key Terminology</h3>
+    <table>
+        <tr><th>Term</th><th>Meaning</th><th>Example</th></tr>
+        <tr><td><strong>Relation</strong></td><td>Table</td><td>Students table</td></tr>
+        <tr><td><strong>Tuple</strong></td><td>Row / Record</td><td>One student's data</td></tr>
+        <tr><td><strong>Attribute</strong></td><td>Column / Field</td><td>Name, Roll_No, Marks</td></tr>
+        <tr><td><strong>Domain</strong></td><td>Set of valid values</td><td>Marks: 0-100</td></tr>
+        <tr><td><strong>Degree</strong></td><td>Number of columns</td><td>5 attributes = degree 5</td></tr>
+        <tr><td><strong>Cardinality</strong></td><td>Number of rows</td><td>100 students = cardinality 100</td></tr>
+        <tr><td><strong>Schema</strong></td><td>Structure of relation</td><td>Student(Roll_No, Name, Dept)</td></tr>
+        <tr><td><strong>Instance</strong></td><td>Actual data at a point in time</td><td>Current set of rows</td></tr>
+    </table>
+
+    <div class="warning-box">
+        <strong>Properties of Relations:</strong><br>
+        1. No duplicate tuples &nbsp; 2. Tuples are unordered &nbsp; 3. Attributes are atomic<br>
+        4. Unique attribute names &nbsp; 5. Values from same domain
+    </div>
+</div>
+
+<!-- SLIDE 12: Hands-On -->
+<div class="slide">
+    <h1>🔧 Hands-On: MySQL Setup & First Database</h1>
+    <p class="subtitle">15 Minutes Practical Lab</p>
+
+    <h3>Step 1: Install MySQL</h3>
+    <div class="code-block">
+<span class="comment"># Windows: Download from dev.mysql.com/downloads/installer/</span>
+<span class="comment"># Linux:</span>
+sudo apt update
+sudo apt install mysql-server
+
+<span class="comment"># Mac:</span>
+brew install mysql
+brew services start mysql
+    </div>
+
+    <h3>Step 2: Create Database & Table</h3>
+    <div class="code-block">
+<span class="comment">-- Login to MySQL</span>
+mysql -u root -p
+
+<span class="comment">-- Create Database</span>
+<span class="keyword">CREATE DATABASE</span> college_db;
+
+<span class="comment">-- Use the database</span>
+<span class="keyword">USE</span> college_db;
+
+<span class="comment">-- Create table with constraints</span>
+<span class="keyword">CREATE TABLE</span> students (
+    roll_no <span class="keyword">INT PRIMARY KEY</span>,
+    name <span class="keyword">VARCHAR</span>(50) <span class="keyword">NOT NULL</span>,
+    department <span class="keyword">VARCHAR</span>(30),
+    marks <span class="keyword">DECIMAL</span>(5,2) <span class="keyword">CHECK</span> (marks >= 0 <span class="keyword">AND</span> marks <= 100),
+    email <span class="keyword">VARCHAR</span>(50) <span class="keyword">UNIQUE</span>
+);
+
+<span class="comment">-- Insert data</span>
+<span class="keyword">INSERT INTO</span> students <span class="keyword">VALUES</span> 
+(1, <span class="string">'Rahul Sharma'</span>, <span class="string">'EC'</span>, 85.5, <span class="string">'rahul@college.edu'</span>),
+(2, <span class="string">'Priya Patel'</span>, <span class="string">'EC'</span>, 92.0, <span class="string">'priya@college.edu'</span>),
+(3, <span class="string">'Amit Kumar'</span>, <span class="string">'EC'</span>, 78.5, <span class="string">'amit@college.edu'</span>);
+
+<span class="comment">-- View data</span>
+<span class="keyword">SELECT</span> * <span class="keyword">FROM</span> students;
+    </div>
+
+    <div class="warning-box">
+        <strong>🎯 Lab Challenge:</strong> Create a <code>courses</code> table with: course_id (PK), course_name (NOT NULL), credits (1-6), instructor. Insert 3 courses.
+    </div>
+</div>
+
+<!-- SLIDE 13: Assignment -->
+<div class="slide">
+    <h1>📝 Session 1 Assignment</h1>
+    <p class="subtitle">Complete before Session 2</p>
+
+    <h3>Theory Questions</h3>
+    <ol>
+        <li>List 5 problems with File Systems that DBMS solves.</li>
+        <li>Explain 3-tier architecture with a diagram.</li>
+        <li>What is data independence? Explain logical and physical independence.</li>
+        <li>Define: Relation, Tuple, Attribute, Domain, Degree, Cardinality.</li>
+        <li>Why is E.F. Codd called the father of relational databases?</li>
+    </ol>
+
+    <h3>Practical Task</h3>
+    <ol>
+        <li>Install MySQL and MySQL Workbench on your laptop</li>
+        <li>Create a database named <code>ec_department</code></li>
+        <li>Create a table <code>faculty</code> with: faculty_id (PK), name, department, salary, joining_date</li>
+        <li>Insert 5 faculty records</li>
+        <li>Take a screenshot of your work</li>
+    </ol>
+
+    <h3>Reading</h3>
+    <div class="highlight-box">
+        Read about: Relational Model, Types of Keys, Integrity Constraints (Session 2 prep)
+    </div>
+
+    <h3>Reference Books</h3>
+    <ul>
+        <li><strong>"Database System Concepts"</strong> - Silberschatz, Korth, Sudarshan (7th Ed)</li>
+        <li><strong>"Fundamentals of Database Systems"</strong> - Elmasri & Navathe</li>
+        <li><strong>"Database Management Systems"</strong> - Ramakrishnan & Gehrke</li>
+    </ul>
+</div>
+
+<!-- SLIDE 14: What's Next -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size:1.2em;">Session 2: Relational Model Deep Dive</p>
+        <div style="margin: 30px auto; max-width: 600px; text-align: left;">
+            <div class="highlight-box">
+                <strong>Topics:</strong><br>
+                • Keys: Super Key, Candidate Key, Primary Key, Foreign Key, Alternate Key<br>
+                • Integrity Constraints: Entity, Referential, Domain<br>
+                • Practical: Create complex tables with all constraint types
+            </div>
+        </div>
+        <p style="color: #718096; margin-top: 30px;">Tomorrow | Same Time | Bring Laptops!</p>
+    </div>
+    <div class="footer">
+        DBMS Course for EC 2nd Year | 30-Hour Program | Session 1 Complete
+    </div>
+</div>
+
+</body>
+</html>
