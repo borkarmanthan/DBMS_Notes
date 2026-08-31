@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 4 - ER Model</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .code-block .comment { color: #68d391; }
+        .code-block .keyword { color: #63b3ed; }
+        .code-block .string { color: #f6ad55; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .attr-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .attr-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .entity-box { background: #fef3c7; border: 2px solid #f59e0b; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .entity-box h4 { color: #92400e; margin-bottom: 8px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge green">SESSION 4</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Entity-Relationship (ER) Model</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit II | Conceptual Database Design</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">Entities</span>
+            <span class="badge">Attributes</span>
+            <span class="badge">Relationships</span>
+            <span class="badge">Cardinality</span>
+            <span class="badge purple">ER-to-Relational</span>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 2: Design Process -->
+<div class="slide">
+    <h1>🏗️ Database Design Process</h1>
+    <div class="diagram" style="font-size:1.1em;">
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│  REQUIREMENTS   │───▶│   CONCEPTUAL    │───▶│    LOGICAL      │
+│   ANALYSIS      │    │    DESIGN       │    │    DESIGN       │
+│                 │    │   (ER Model)    │    │  (Relational)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+        │                       │                       │
+        ▼                       ▼                       ▼
+   "What data?"          "How entities           "Tables, keys,
+   "Who uses it?"         relate?"                constraints"
+   "What operations?"
+    </div>
+    <div class="highlight-box">
+        <strong>ER Model is the bridge</strong> between user requirements and the actual database implementation. It was proposed by <strong>Peter Chen (1976)</strong>.
+    </div>
+    <div class="two-col">
+        <div>
+            <h3>Why ER Model?</h3>
+            <ul>
+                <li>Easy for non-technical stakeholders</li>
+                <li>Visual representation of data</li>
+                <li>Independent of any DBMS</li>
+                <li>Foundation for relational schemas</li>
+            </ul>
+        </div>
+        <div>
+            <h3>Key Components</h3>
+            <ul>
+                <li><strong>Entities</strong> — Real-world objects</li>
+                <li><strong>Attributes</strong> — Properties of entities</li>
+                <li><strong>Relationships</strong> — Associations between entities</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 3: Attributes -->
+<div class="slide">
+    <h1>📊 Types of Attributes</h1>
+    <div class="two-col">
+        <div>
+            <div class="attr-card">
+                <h4>🔵 Simple (Atomic)</h4>
+                <p style="font-size:0.9em;">Cannot be divided further</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: roll_no, age, salary</p>
+            </div>
+            <div class="attr-card" style="border-color:#f59e0b;">
+                <h4 style="color:#c05621;">🟠 Composite</h4>
+                <p style="font-size:0.9em;">Can be divided into sub-parts</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: name = (first, middle, last)<br>address = (street, city, pin)</p>
+            </div>
+        </div>
+        <div>
+            <div class="attr-card" style="border-color:#38a169;">
+                <h4 style="color:#276749;">🟢 Multivalued</h4>
+                <p style="font-size:0.9em;">Can have multiple values</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: phone numbers, emails<br>Represented by { } or double oval</p>
+            </div>
+            <div class="attr-card" style="border-color:#805ad5;">
+                <h4 style="color:#6b21a8;">🟣 Derived</h4>
+                <p style="font-size:0.9em;">Computed from other attributes</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: age = current_date − dob<br>total_marks = sum of subjects</p>
+            </div>
+        </div>
+    </div>
+    <table>
+        <tr><th>Type</th><th>Divisible?</th><th>Multiple Values?</th><th>Computed?</th><th>Example</th></tr>
+        <tr><td>Simple</td><td>No</td><td>No</td><td>No</td><td>roll_no, salary</td></tr>
+        <tr><td>Composite</td><td>Yes</td><td>No</td><td>No</td><td>name, address</td></tr>
+        <tr><td>Multivalued</td><td>No</td><td>Yes</td><td>No</td><td>phone, email</td></tr>
+        <tr><td>Derived</td><td>No</td><td>No</td><td>Yes</td><td>age, total_marks</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 4: Relationships & Cardinality -->
+<div class="slide">
+    <h1>🔗 Relationships & Cardinality</h1>
+    <div class="two-col">
+        <div>
+            <div class="entity-box">
+                <h4>One-to-One (1:1)</h4>
+                <p style="font-size:0.9em;">One A ↔ One B</p>
+                <div class="diagram" style="font-size:0.85em;">EMPLOYEE ───1─── manages ───1─── DEPARTMENT</div>
+                <p style="font-size:0.8em; color:#4a5568;">One employee manages one dept<br>One dept has one manager</p>
+            </div>
+            <div class="entity-box" style="border-color:#3182ce;">
+                <h4 style="color:#2b6cb0;">One-to-Many (1:N)</h4>
+                <p style="font-size:0.9em;">One A → Many B</p>
+                <div class="diagram" style="font-size:0.85em;">DEPARTMENT ───1─── has ───N─── EMPLOYEE</div>
+                <p style="font-size:0.8em; color:#4a5568;">One dept has many employees<br>Each employee belongs to one dept</p>
+            </div>
+        </div>
+        <div>
+            <div class="entity-box" style="border-color:#e53e3e;">
+                <h4 style="color:#c53030;">Many-to-Many (M:N)</h4>
+                <p style="font-size:0.9em;">Many A ↔ Many B</p>
+                <div class="diagram" style="font-size:0.85em;">STUDENT ───M─── enrolls ───N─── COURSE</div>
+                <p style="font-size:0.8em; color:#4a5568;">One student enrolls in many courses<br>One course has many students</p>
+            </div>
+            <div class="highlight-box">
+                <h4>Participation Constraints</h4>
+                <p style="font-size:0.9em;"><strong>Total:</strong> Every entity MUST participate<br>(double line)</p>
+                <p style="font-size:0.9em;"><strong>Partial:</strong> Some entities MAY participate<br>(single line)</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 5: Weak Entity -->
+<div class="slide">
+    <h1>🎭 Weak Entities</h1>
+    <div class="highlight-box">
+        A <strong>Weak Entity</strong> cannot be uniquely identified by its own attributes. It depends on an <strong>Identifying Owner</strong> for its existence and identity.
+    </div>
+    <div class="diagram" style="font-size:1em;">
+    EMPLOYEE ════════1════════ has ════════N════════ ╔═══════════════╗
+    (emp_id, name)   (total)          (total)       ║   DEPENDENT   ║
+                                                      ║  (dep_name)   ║ ← Partial Key
+                                                      ╚═══════════════╝
+                                                      Double rectangle = Weak Entity
+                                                      Double diamond = Identifying Rel.
+                                                      Double line = Total Participation
+    </div>
+    <div class="two-col">
+        <div>
+            <h3>Characteristics</h3>
+            <ul>
+                <li>Has a <strong>partial key</strong> (discriminator)</li>
+                <li>Needs owner's PK for full identity</li>
+                <li><strong>Total participation</strong> in identifying relationship</li>
+                <li>Represented by <strong>double rectangle</strong></li>
+            </ul>
+        </div>
+        <div>
+            <h3>Relational Mapping</h3>
+            <div class="code-block" style="font-size:0.85em; padding:14px;">
+<span class="keyword">CREATE TABLE</span> dependent (
+    emp_id <span class="keyword">INT</span>,
+    dep_name <span class="keyword">VARCHAR</span>(50),
+    relationship <span class="keyword">VARCHAR</span>(20),
+    <span class="keyword">PRIMARY KEY</span> (emp_id, dep_name),
+    <span class="keyword">FOREIGN KEY</span> (emp_id) <span class="keyword">REFERENCES</span> employee(emp_id)
+);
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 6: ER-to-Relational Mapping -->
+<div class="slide">
+    <h1>🗺️ ER-to-Relational Mapping Rules</h1>
+    <table>
+        <tr><th>ER Component</th><th>Relational Mapping</th><th>Example</th></tr>
+        <tr><td><strong>Strong Entity</strong></td><td>Table with PK</td><td>student(roll_no PK, name)</td></tr>
+        <tr><td><strong>Composite Attr</strong></td><td>Flatten to simple attrs</td><td>name → first, middle, last</td></tr>
+        <tr><td><strong>Multivalued Attr</strong></td><td>Separate table</td><td>student_phone(roll_no FK, phone)</td></tr>
+        <tr><td><strong>1:1 Relationship</strong></td><td>Add FK to either side</td><td>Add dept_id to employee (UNIQUE)</td></tr>
+        <tr><td><strong>1:N Relationship</strong></td><td>Add FK to 'many' side</td><td>Add dept_id to employee</td></tr>
+        <tr><td><strong>M:N Relationship</strong></td><td>Create junction table</td><td>enrollment(roll_no FK, course_id FK)</td></tr>
+        <tr><td><strong>Weak Entity</strong></td><td>Table with composite PK</td><td>dependent(emp_id FK, dep_name PK)</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 7: Complete Example -->
+<div class="slide">
+    <h1>💻 Complete Mapping Example</h1>
+    <p class="subtitle">College System: Department, Student, Course, Faculty, Enrollment</p>
+    <div class="diagram" style="font-size:0.85em;">
+    DEPARTMENT(dept_id PK, dept_name, location)
+         │
+         │ 1 has N
+         ▼
+    STUDENT(roll_no PK, name, dob, gender, cgpa, dept_id FK)
+    student_phone(roll_no FK, phone PK)
+         │
+         │ M enrolls N
+         ▼
+    COURSE(course_id PK, course_code, course_name, credits, 
+           dept_id FK, faculty_id FK)
+         ▲
+         │ 1 teaches N
+         │
+    FACULTY(faculty_id PK, first_name, last_name, salary, dept_id FK)
+
+    ENROLLMENT(roll_no FK, course_id FK, semester, grade, 
+               PRIMARY KEY(roll_no, course_id, semester))
+    </div>
+    <div class="success-box">
+        <strong>Key Takeaway:</strong> Every entity → table. Every M:N → junction table. Every multivalued → separate table.
+    </div>
+</div>
+
+<!-- SLIDE 8: Assignment -->
+<div class="slide">
+    <h1>📝 Session 4 Assignment</h1>
+    <p class="subtitle">Complete before Session 5 (Functional Dependencies)</p>
+
+    <h3>Theory</h3>
+    <ol>
+        <li>What is the ER Model? Who proposed it?</li>
+        <li>Differentiate Simple, Composite, Multivalued, Derived attributes.</li>
+        <li>What is a Weak Entity? How is it different from Strong?</li>
+        <li>Explain 1:1, 1:N, M:N with real-world examples.</li>
+        <li>Difference between Total and Partial Participation?</li>
+        <li>Map: Strong Entity, Composite Attr, M:N, Weak Entity to Relational.</li>
+    </ol>
+
+    <h3>Practical</h3>
+    <ol>
+        <li>Design ER Diagram for <strong>Hospital Management</strong> (draw.io or paper)</li>
+        <li>Include: composite attr, multivalued attr, all cardinalities, weak entity</li>
+        <li>Map to complete Relational Schema with CREATE TABLE statements</li>
+        <li>Screenshot your ER Diagram</li>
+    </ol>
+
+    <div class="highlight-box">
+        <strong>Reading for Session 5:</strong> Functional Dependencies, Closure, Armstrong's Axioms
+    </div>
+</div>
+
+<!-- SLIDE 9: What's Next -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size:1.2em;">Session 5: Functional Dependencies & Schema Refinement</p>
+        <div style="margin: 30px auto; max-width: 600px; text-align: left;">
+            <div class="highlight-box">
+                <strong>Topics:</strong><br>
+                • Functional Dependencies (Trivial vs Non-trivial)<br>
+                • Armstrong's Axioms & Attribute Closure<br>
+                • Finding Candidate Keys<br>
+                • Minimal Cover & Decomposition<br>
+                • <strong>Bring:</strong> Your thinking caps!
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        DBMS Course for EC 2nd Year | Session 4 Complete | Unit II — ER Model
+    </div>
+</div>
+
+</body>
+</html>

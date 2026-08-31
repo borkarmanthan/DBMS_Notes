@@ -1,0 +1,133 @@
+
+═══════════════════════════════════════════════════════
+  DBMS SESSION 5 — INSTRUCTOR PREPARATION SUMMARY
+═══════════════════════════════════════════════════════
+
+📅 Session Info
+  • Topic: Functional Dependencies & Schema Refinement
+  • Unit: II
+  • Duration: 2 Hours
+  • Prerequisite: Session 4 (ER Model)
+
+📦 Files Created
+  1. DBMS_Session5_Complete.md      → Full instructor guide
+  2. DBMS_Session5_Presentation.html → Browser slides
+  3. Interactive Widget              → FD solver (axioms, closure, keys)
+  4. This Summary                    → Quick prep cheat sheet
+
+═══════════════════════════════════════════════════════
+⏱️ TIME BREAKDOWN (120 Minutes)
+═══════════════════════════════════════════════════════
+
+  0:00-0:05  → Recap + Assignment Review
+  0:05-0:25  → Introduction to FDs, Trivial vs Non-trivial
+  0:25-0:45  → Armstrong's Axioms & Deriving FDs
+  0:45-0:55  → Attribute Closure & Finding Candidate Keys
+  0:55-1:05  → ☕ BREAK
+  1:05-1:25  → Minimal Cover (Canonical Cover)
+  1:25-1:45  → Schema Refinement & Decomposition
+  1:45-1:55  → 🔧 HANDS-ON: 10 FD Problems
+  1:55-2:00  → Quiz + Assignment + Q&A
+
+═══════════════════════════════════════════════════════
+🎯 CORE CONCEPTS TO EMPHASIZE
+═══════════════════════════════════════════════════════
+
+  1. FD DEFINITION (the ONE thing they must understand)
+     "If X is the same, Y MUST be the same"
+     roll_no → name: same roll_no → same name (always!)
+
+  2. TRIVIAL vs NON-TRIVIAL
+     Trivial: Y ⊆ X (useless, always true)
+     Non-trivial: Y ⊄ X (the ones that matter)
+
+  3. ARMSTRONG'S AXIOMS (must know all 6)
+     Primary: Reflexivity, Augmentation, Transitivity
+     Derived: Union, Decomposition, Pseudo-Transitivity
+
+  4. ATTRIBUTE CLOSURE ALGORITHM (step-by-step on board)
+     X⁺ = X
+     Repeat: For each Y→Z, if Y⊆X⁺, add Z
+     Until no change
+
+  5. FINDING CANDIDATE KEYS
+     Only LHS → must be in key
+     Only RHS → never in key
+     Both sides → test combinations
+     Neither side → must be in key
+
+  6. MINIMAL COVER (3 steps)
+     Step 1: Decompose RHS
+     Step 2: Remove extraneous LHS attributes
+     Step 3: Remove redundant FDs
+
+  7. DECOMPOSITION
+     Lossless: R1∩R2 → R1 OR R1∩R2 → R2
+     Dependency Preserving: All FDs in individual relations
+
+═══════════════════════════════════════════════════════
+🔧 HANDS-ON: 10 PROBLEMS
+═══════════════════════════════════════════════════════
+
+  Q1: Simple closure (A⁺)
+  Q2: Composite closure ((BC)⁺)
+  Q3: Finding candidate keys
+  Q4: Minimal cover
+  Q5: Armstrong proof (AC→D)
+  Q6: Decomposition example
+  Q7: Lossless check
+  Q8: Multiple candidate keys
+  Q9: Armstrong proof
+  Q10: Minimal cover with extraneous attributes
+
+  Walk through Q1-Q5 in class
+  Assign Q6-Q10 as homework
+
+═══════════════════════════════════════════════════════
+📋 QUICK QUIZ ANSWERS
+═══════════════════════════════════════════════════════
+
+  Q1: Y⊆X → trivial FD
+  Q2: X→Y, Y→Z → X→Z (transitivity)
+  Q3: A⁺ with {A→B, B→C} → {A,B,C}
+  Q4: Lossless test → R1∩R2 is super key of one relation
+  Q5: Fc of {A→BC, B→C, A→B, AB→C} → {A→B, B→C}
+
+═══════════════════════════════════════════════════════
+📝 ASSIGNMENT
+═══════════════════════════════════════════════════════
+
+  Theory: 10 questions (definitions, proofs, algorithms)
+  Practical:
+    - Find all FDs in College DB
+    - Compute closures for roll_no, dept_id, (roll_no, course_id)
+    - Find candidate keys for each relation
+    - Find minimal cover for enrollment FDs
+    - Check if schema is lossless and dependency preserving
+
+═══════════════════════════════════════════════════════
+⚠️ COMMON STUDENT MISTAKES
+═══════════════════════════════════════════════════════
+
+  1. Forgetting that closure starts with X itself
+  2. Confusing which side is LHS vs RHS
+  3. Not checking minimality for candidate keys
+  4. Trying to remove wrong extraneous attributes
+  5. Forgetting to decompose RHS in minimal cover
+  6. Confusing lossless with dependency preservation
+
+═══════════════════════════════════════════════════════
+💡 TEACHING TIPS
+═══════════════════════════════════════════════════════
+
+  1. Use a simple table on the board to demonstrate FDs
+  2. Walk through closure algorithm SLOWLY — step by step
+  3. Use the interactive widget for live closure computation
+  4. For minimal cover, do ONE complete example on the board
+  5. Connect decomposition to the "student_dept" example
+  6. Emphasize: "Tomorrow — Normalization! The most important session!"
+
+═══════════════════════════════════════════════════════
+  Next Session: Normalization (1NF → 2NF → 3NF → BCNF)
+  This is the MOST IMPORTANT session of Unit II!
+═══════════════════════════════════════════════════════

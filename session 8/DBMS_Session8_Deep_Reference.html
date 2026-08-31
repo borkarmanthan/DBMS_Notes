@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DBMS Session 8 — Deep Reference: Transactions & Concurrency Control</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.7; }
+    .page { max-width: 1000px; margin: 0 auto; background: white; padding: 50px 60px; }
+    h1 { color: #1a365d; font-size: 2.3em; margin-bottom: 8px; }
+    h2 { color: #1a365d; font-size: 1.6em; margin: 40px 0 15px; border-bottom: 3px solid #dd6b20; padding-bottom: 8px; }
+    h3 { color: #c05621; font-size: 1.25em; margin: 25px 0 12px; }
+    h4 { color: #9c4221; font-size: 1.05em; margin: 15px 0 8px; }
+    .subtitle { color: #718096; font-size: 1.15em; margin-bottom: 6px; }
+    .badges { margin: 18px 0 30px; }
+    .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+    .badge.green { background: #38a169; }
+    .badge.orange { background: #dd6b20; }
+    .badge.purple { background: #805ad5; }
+    .badge.red { background: #e53e3e; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0 25px; }
+    th { background: #9c4221; color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 0.95em; }
+    td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; font-size: 0.95em; }
+    tr:nth-child(even) { background: #f7fafc; }
+    .highlight-box { background: #fff7ed; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+    .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+    .warning-box { background: #fff5f5; border-left: 5px solid #e53e3e; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+    .key-box { background: #faf5ff; border-left: 5px solid #805ad5; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+    .code-block { background: #1a202c; color: #e2e8f0; padding: 18px 22px; border-radius: 10px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; overflow-x: auto; margin: 15px 0; white-space: pre; }
+    .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: 'Consolas', monospace; white-space: pre; line-height: 1.8; margin: 15px 0; font-size: 0.95em; }
+    ul, ol { margin: 10px 0 10px 25px; }
+    li { margin: 6px 0; }
+    .toc { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 25px; margin: 20px 0 30px; }
+    .toc a { color: #9c4221; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc ol { margin-left: 20px; }
+    .toc li { margin: 5px 0; }
+    .qbank { counter-reset: qnum; }
+    .qbank li { margin: 10px 0; }
+    .section-divider { border: none; border-top: 2px solid #e2e8f0; margin: 45px 0; }
+    .leetcode-card { background: #fff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin: 10px 0; }
+    .leetcode-card strong { color: #1a365d; }
+    .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    @media print {
+        body { background: white; }
+        .page { padding: 20px; }
+        h2 { page-break-after: avoid; }
+        table, .code-block, .diagram { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+<div class="page">
+
+    <span class="badge orange">SESSION 8 — DEEP REFERENCE</span>
+    <h1>Transactions & Concurrency Control</h1>
+    <p class="subtitle">Unit IV Begins | Keeping Data Correct Under Concurrent Access</p>
+    <div class="badges">
+        <span class="badge">ACID</span>
+        <span class="badge green">Locking</span>
+        <span class="badge purple">Isolation Levels</span>
+        <span class="badge red">Deadlocks</span>
+    </div>
+
+    <div class="toc">
+        <strong>Contents</strong>
+        <ol>
+            <li><a href="#s1">What is a Transaction? Transaction States</a></li>
+            <li><a href="#s2">ACID Properties — Worked Example</a></li>
+            <li><a href="#s3">Four Concurrency Problems — Mini Scenarios</a></li>
+            <li><a href="#s4">Locking & Two-Phase Locking</a></li>
+            <li><a href="#s5">Isolation Levels</a></li>
+            <li><a href="#s6">Deadlocks — Worked Scenario</a></li>
+            <li><a href="#s7">Hands-On Practicals (MySQL)</a></li>
+            <li><a href="#s8">Full Exam Question Bank</a></li>
+            <li><a href="#s9">LeetCode / Coding Connections</a></li>
+        </ol>
+    </div>
+
+    <h2 id="s1">1. What is a Transaction? Transaction States</h2>
+    <div class="highlight-box">
+        A transaction is a sequence of one or more operations treated as a single logical unit of work — it either completes entirely, or has no effect at all.
+    </div>
+    <div class="diagram">Active → Partially Committed → Committed
+   ↓
+Failed → Aborted</div>
+    <ul>
+        <li><strong>Active</strong> — operations are currently executing</li>
+        <li><strong>Partially Committed</strong> — last operation finished, but not yet made durable</li>
+        <li><strong>Committed</strong> — changes are permanent and visible to others</li>
+        <li><strong>Failed / Aborted</strong> — something went wrong; everything rolls back, as if it never happened</li>
+    </ul>
+    <div class="key-box">
+        <strong>Teaching hook:</strong> "What happens if the power goes out right between the debit and the credit?" That gap is exactly what Partially Committed vs Committed distinguishes — the state where work is done but not yet guaranteed to survive a crash.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s2">2. ACID Properties — Worked Example</h2>
+    <p>Use <strong>one running example</strong> — transferring ₹500 from Account A to Account B — for all four properties. Don't switch examples per letter.</p>
+    <table>
+        <tr><th>Property</th><th>Guarantee</th><th>In the Transfer</th></tr>
+        <tr><td><strong>Atomicity</strong></td><td>All operations succeed, or none do</td><td>Debit A and credit B both happen, or neither does</td></tr>
+        <tr><td><strong>Consistency</strong></td><td>DB moves from one valid state to another valid state</td><td>Total money across both accounts is identical before and after</td></tr>
+        <tr><td><strong>Isolation</strong></td><td>Concurrent transactions don't see each other's uncommitted state</td><td>No one else ever sees money "missing" from A but not yet "arrived" in B</td></tr>
+        <tr><td><strong>Durability</strong></td><td>Committed changes survive even a crash</td><td>Power failure right after COMMIT does not lose the transfer</td></tr>
+    </table>
+    <div class="warning-box">
+        <strong>Common mix-up:</strong> Consistency vs Isolation. Consistency asks "is the <em>final</em> state valid?" Isolation asks "can anyone <em>peek</em> at my in-progress work?" They sound similar but answer completely different questions.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s3">3. Four Concurrency Problems — Mini Scenarios</h2>
+    <div class="highlight-box">
+        These problems exist <strong>only</strong> because multiple transactions run against the same data at the same time.
+    </div>
+
+    <h4>Dirty Read</h4>
+    <p>Transaction B reads a value Transaction A wrote but hasn't committed yet.</p>
+    <div class="code-block">A: UPDATE student SET cgpa=9.5 WHERE roll_no=101;   -- not committed
+B: SELECT cgpa FROM student WHERE roll_no=101;      -- reads 9.5
+A: ROLLBACK;                                        -- cgpa reverts to 8.0
+-- B acted on a value that never actually existed</div>
+
+    <h4>Lost Update</h4>
+    <p>Two transactions read the same value, compute independently, and one write silently overwrites the other.</p>
+    <div class="code-block">A reads cgpa = 8.0, computes 8.0 + 0.5 = 8.5, writes 8.5
+B reads cgpa = 8.0, computes 8.0 + 0.3 = 8.3, writes 8.3 (overwrites A)
+-- A's +0.5 update is lost entirely</div>
+
+    <h4>Unrepeatable Read</h4>
+    <p>Same transaction reads the same row twice, gets two different values.</p>
+    <div class="code-block">-- Within ONE transaction:
+SELECT cgpa FROM student WHERE roll_no=101;   -- 8.0
+   ...(another transaction commits an update here)...
+SELECT cgpa FROM student WHERE roll_no=101;   -- 8.5 (changed!)</div>
+
+    <h4>Phantom Read</h4>
+    <p>Same range query re-run, and a brand-new row appears.</p>
+    <div class="code-block">SELECT * FROM student WHERE dept_id=1;   -- returns 10 rows
+   ...(another transaction inserts+commits an 11th student in dept 1)...
+SELECT * FROM student WHERE dept_id=1;   -- returns 11 rows</div>
+
+    <div class="key-box">
+        <strong>Quick test for students:</strong> Unrepeatable Read = same row, different <em>value</em>. Phantom Read = same query, different <em>row count</em>.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s4">4. Locking & Two-Phase Locking</h2>
+    <table>
+        <tr><th>Lock</th><th>Purpose</th><th>Rule</th></tr>
+        <tr><td><strong>Shared (S)</strong></td><td>Reading</td><td>Multiple transactions can hold it on the same item together</td></tr>
+        <tr><td><strong>Exclusive (X)</strong></td><td>Writing</td><td>Only ONE transaction can hold it — blocks all others</td></tr>
+    </table>
+
+    <h3>Two-Phase Locking (2PL)</h3>
+    <div class="diagram">Growing Phase          Shrinking Phase
+(acquire locks only) → (release locks only)</div>
+    <p>Once a transaction releases its first lock, it may never acquire a new one. This strict separation is what guarantees <strong>serializability</strong>.</p>
+
+    <div class="warning-box">
+        <strong>The exam trap — say this verbatim in class:</strong><br>
+        "2PL guarantees serializability. It does NOT guarantee freedom from deadlocks."<br>
+        A transaction can follow 2PL perfectly and still wait forever on a lock someone else holds. These are two separate guarantees.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s5">5. Isolation Levels</h2>
+    <table>
+        <tr><th>Level</th><th>Dirty Read</th><th>Unrepeatable Read</th><th>Phantom Read</th></tr>
+        <tr><td><strong>Read Uncommitted</strong></td><td>❌ Allowed</td><td>❌ Allowed</td><td>❌ Allowed</td></tr>
+        <tr><td><strong>Read Committed</strong></td><td>✅ Prevented</td><td>❌ Allowed</td><td>❌ Allowed</td></tr>
+        <tr><td><strong>Repeatable Read</strong></td><td>✅ Prevented</td><td>✅ Prevented</td><td>❌ Allowed</td></tr>
+        <tr><td><strong>Serializable</strong></td><td>✅ Prevented</td><td>✅ Prevented</td><td>✅ Prevented</td></tr>
+    </table>
+    <div class="warning-box">
+        <strong>Trap to flag:</strong> "Read Committed" sounds safe, but it does <strong>not</strong> prevent Unrepeatable Reads. The name implies more safety than it actually delivers.
+    </div>
+    <div class="highlight-box">
+        Stricter isolation = safer data, but more locking/blocking = slower throughput. Choosing an isolation level is a deliberate trade-off, not a default to leave untouched.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s6">6. Deadlocks — Worked Scenario</h2>
+    <div class="highlight-box">
+        A deadlock happens when Transaction A holds a lock Transaction B needs, and Transaction B holds a lock Transaction A needs — both wait forever.
+    </div>
+    <div class="code-block">Transaction A: locks student row 101
+               → then wants to lock enrollment row for 101
+
+Transaction B: locks enrollment row for 101
+               → then wants to lock student row 101
+
+-- A waits on B's lock. B waits on A's lock. Neither can proceed. Deadlock.</div>
+    <p><strong>Handling methods:</strong> timeout (give up after N seconds), wait-die/wound-wait schemes (based on transaction age/priority), or active deadlock detection followed by rolling back one transaction.</p>
+
+    <hr class="section-divider">
+
+    <h2 id="s7">7. Hands-On Practicals (MySQL)</h2>
+
+    <h4>Practical 1 — Observe a Dirty Read is Prevented by Default</h4>
+    <div class="code-block">-- Session A
+START TRANSACTION;
+UPDATE student SET cgpa = 9.5 WHERE roll_no = 101;
+-- do NOT commit yet
+
+-- Session B (default isolation = Read Committed in MySQL)
+SELECT cgpa FROM student WHERE roll_no = 101;
+-- returns OLD value — dirty read prevented by default
+
+-- Only AFTER Session A commits:
+-- Session B
+SELECT cgpa FROM student WHERE roll_no = 101;
+-- now returns 9.5</div>
+
+    <h4>Practical 2 — Force a Dirty Read to Happen</h4>
+    <div class="code-block">-- Session B, BEFORE the SELECT:
+SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+SELECT cgpa FROM student WHERE roll_no = 101;
+-- now DOES return 9.5, even though Session A hasn't committed</div>
+
+    <h4>Practical 3 — Simulate a Lost Update</h4>
+    <div class="code-block">-- Session A
+START TRANSACTION;
+SELECT cgpa FROM student WHERE roll_no = 101;   -- reads 8.0
+UPDATE student SET cgpa = 8.5 WHERE roll_no = 101;
+COMMIT;
+
+-- Session B (started before A committed, using its own stale read of 8.0)
+START TRANSACTION;
+SELECT cgpa FROM student WHERE roll_no = 101;   -- also reads 8.0
+UPDATE student SET cgpa = 8.3 WHERE roll_no = 101;
+COMMIT;
+-- Final value is 8.3 — A's update to 8.5 is lost</div>
+
+    <h4>Practical 4 — Build a Deadlock on Purpose</h4>
+    <div class="code-block">-- Session A
+START TRANSACTION;
+UPDATE student SET cgpa = 9.0 WHERE roll_no = 101;   -- locks student row 101
+-- (pause here)
+UPDATE enrollment SET grade = 'A' WHERE roll_no = 101;  -- wants enrollment lock
+
+-- Session B (run while Session A is paused)
+START TRANSACTION;
+UPDATE enrollment SET grade = 'B' WHERE roll_no = 101;  -- locks enrollment row 101
+-- (pause here)
+UPDATE student SET cgpa = 8.0 WHERE roll_no = 101;      -- wants student lock
+
+-- Result: MySQL detects the deadlock and automatically rolls back one transaction</div>
+
+    <h4>Practical 5 — Compare All Four Isolation Levels</h4>
+    <p>Repeat Practical 1's read using each level, and have students record the observed behavior in a table:</p>
+    <div class="code-block">SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+SET TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+SET TRANSACTION ISOLATION LEVEL SERIALIZABLE;</div>
+
+    <hr class="section-divider">
+
+    <h2 id="s8">8. Full Exam Question Bank</h2>
+    <ol class="qbank">
+        <li>Define ACID, with one concrete example for each property.</li>
+        <li>Draw and explain the transaction state diagram.</li>
+        <li>Explain all four concurrency problems with an example of each.</li>
+        <li>Differentiate the four isolation levels and what each one prevents.</li>
+        <li>What is Two-Phase Locking, and what does it guarantee?</li>
+        <li>Explain why 2PL guarantees serializability but NOT deadlock-freedom.</li>
+        <li>Define deadlock and describe two ways a database can handle it.</li>
+        <li>Differentiate Consistency (ACID) from Isolation (ACID) — a commonly confused pair.</li>
+        <li>Why might a system deliberately choose Read Committed over Serializable?<br>
+            <em>Model answer: performance — stricter isolation means more locking/blocking and lower throughput; Read Committed is a deliberate trade-off when the application can tolerate unrepeatable/phantom reads.</em></li>
+        <li>Scenario: Transaction X reads a row, another transaction commits a change to it, X reads it again in the same transaction and gets a different value. Name the anomaly. <em>(Unrepeatable Read)</em></li>
+        <li>True/False with justification: "Read Committed prevents unrepeatable reads." <em>(False — it only prevents dirty reads.)</em></li>
+    </ol>
+
+    <hr class="section-divider">
+
+    <h2 id="s9">9. LeetCode / Coding Connections</h2>
+    <div class="warning-box">
+        <strong>Being direct about this:</strong> LeetCode has no "implement 2PL" or "design isolation levels" problem — that's a systems/DBMS topic. However, LeetCode's <em>Concurrency</em> category (multithreading problems) is built on the exact same primitives — locks, mutual exclusion, ordering guarantees — that this session covers conceptually. These make excellent optional enrichment, especially for students comfortable with Java/Python threading.
+    </div>
+
+    <div class="leetcode-card">
+        <strong>LeetCode 1114 — Print in Order</strong><br>
+        Three threads must print "first", "second", "third" strictly in order. Direct hands-on parallel to why <strong>ordering guarantees</strong> (like 2PL's growing/shrinking discipline) matter when multiple executions interleave.
+    </div>
+    <div class="leetcode-card">
+        <strong>LeetCode 1115 — Print FooBar Alternately</strong><br>
+        Two threads must alternate strictly. Mirrors how a <strong>Shared vs Exclusive lock</strong> forces mutual exclusion between competing transactions.
+    </div>
+    <div class="leetcode-card">
+        <strong>LeetCode 1116 — Print Zero Even Odd</strong><br>
+        Three threads coordinating via semaphores — a concrete, code-level illustration of the coordination that lock managers do at the database engine level.
+    </div>
+    <div class="leetcode-card">
+        <strong>LeetCode 1226 — The Dining Philosophers</strong><br>
+        This is the closest LeetCode gets to teaching <strong>deadlock</strong> directly — philosophers (transactions) competing for forks (locks) in a way that can deadlock if not handled carefully. Excellent to assign right after the Deadlock section.
+    </div>
+    <div class="leetcode-card">
+        <strong>LeetCode 1195 — Fizz Buzz Multithreaded</strong><br>
+        Four threads must coordinate strict turn-taking — good practice for the discipline 2PL enforces (acquire only during growing phase, release only during shrinking phase).
+    </div>
+
+    <div class="footer">DBMS Session 8 — Deep Reference | Transactions & Concurrency Control | Unit IV</div>
+</div>
+</body>
+</html>

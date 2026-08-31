@@ -1,0 +1,150 @@
+═══════════════════════════════════════════════════════
+  DBMS SESSION 8 — INSTRUCTOR PREPARATION SUMMARY
+═══════════════════════════════════════════════════════
+
+📅 Session Info
+  • Topic: Transactions & Concurrency Control
+  • Unit: IV (begins)
+  • Duration: 2 Hours
+  • Prerequisite: Session 7 (Indexing & File Organization)
+
+📦 Files Created
+  1. DBMS_Session8_Complete.docx      → Full instructor guide (theory + lab + assignment)
+  2. DBMS_Session8_Presentation.html  → Browser slides (open → Print to PDF)
+  3. This Summary                     → Quick prep cheat sheet
+
+═══════════════════════════════════════════════════════
+⏱️ TIME BREAKDOWN (120 Minutes)
+═══════════════════════════════════════════════════════
+
+  0:00-0:05  → Recap + Assignment Review (Indexing, EXPLAIN)
+  0:05-0:20  → What is a Transaction? Transaction States
+  0:20-0:40  → ACID Properties
+  0:40-1:00  → Concurrency Problems (Dirty Read, Lost Update, etc.)
+  1:00-1:10  → ☕ BREAK
+  1:10-1:30  → Concurrency Control: Locking & Two-Phase Locking
+  1:30-1:45  → Isolation Levels & Deadlocks
+  1:45-1:55  → 🔧 HANDS-ON: Simulate concurrency issues with 2 MySQL sessions
+  1:55-2:00  → Quiz + Assignment + Q&A
+
+═══════════════════════════════════════════════════════
+🎯 CORE CONCEPTS TO EMPHASIZE
+═══════════════════════════════════════════════════════
+
+  1. TRANSACTION STATES (draw the state diagram!)
+     Active → Partially Committed → Committed
+                    ↓
+                  Failed → Aborted
+
+  2. ACID PROPERTIES
+     Atomicity: all operations succeed, or none do
+     Consistency: DB moves from one valid state to another valid state
+     Isolation: concurrent transactions don't see each other's
+                intermediate (uncommitted) state
+     Durability: once committed, changes survive even a crash
+
+  3. FOUR CONCURRENCY PROBLEMS (the ones that show up in every exam)
+     Dirty Read: reading another transaction's UNCOMMITTED data
+     Lost Update: two transactions overwrite each other's write
+     Unrepeatable Read: same query, different result, within one txn
+     Phantom Read: a re-run query returns NEW rows that appeared
+
+  4. LOCKING
+     Shared (S) Lock: for reading — multiple txns can hold it together
+     Exclusive (X) Lock: for writing — only one txn can hold it
+     Two-Phase Locking (2PL): Growing phase (acquire locks only) then
+       Shrinking phase (release locks only) — guarantees serializability
+
+  5. ISOLATION LEVELS → WHICH ANOMALY THEY PREVENT
+     Read Uncommitted: prevents nothing (dirty reads allowed)
+     Read Committed: prevents dirty read
+     Repeatable Read: prevents dirty read + unrepeatable read
+     Serializable: prevents all four, including phantom read
+     → Stricter isolation = safer but slower (more locking/blocking)
+
+  6. DEADLOCK
+     Two transactions each hold a lock the other needs → both wait forever
+     Handled via: timeout, wait-die / wound-wait schemes, or detection
+     + rollback of one transaction
+
+═══════════════════════════════════════════════════════
+🔧 HANDS-ON: SIMULATE CONCURRENCY IN MYSQL
+═══════════════════════════════════════════════════════
+
+  Open TWO terminal sessions connected to MySQL (Session A, Session B).
+
+  Session A:
+    START TRANSACTION;
+    UPDATE student SET cgpa = 9.5 WHERE roll_no = 101;
+    -- do NOT commit yet
+
+  Session B (default isolation — Read Committed in MySQL):
+    SELECT cgpa FROM student WHERE roll_no = 101;
+    -- returns the OLD value — dirty read is prevented by default
+
+  Session B (only after Session A commits):
+    SELECT cgpa FROM student WHERE roll_no = 101;
+    -- now returns 9.5
+
+  Try changing Session B's isolation level to demonstrate the
+  difference:
+    SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+
+═══════════════════════════════════════════════════════
+📋 QUICK QUIZ ANSWERS
+═══════════════════════════════════════════════════════
+
+  Q1: Which ACID property ensures "all or nothing"?
+      → Atomicity
+  Q2: Reading another transaction's uncommitted data is called?
+      → Dirty Read
+  Q3: Which isolation level prevents ALL four concurrency problems?
+      → Serializable
+  Q4: What does Two-Phase Locking guarantee?
+      → Serializability
+  Q5: Two transactions waiting on each other's locks forever is called?
+      → Deadlock
+
+═══════════════════════════════════════════════════════
+📝 ASSIGNMENT
+═══════════════════════════════════════════════════════
+
+  Theory: 8 questions (ACID, concurrency problems, locking, isolation)
+  Practical:
+    - Simulate a dirty read and a lost update using two MySQL sessions
+    - Document the output at each isolation level (all 4 levels)
+    - Design a deadlock scenario using the College DB's student and
+      enrollment tables (two transactions locking rows in opposite order)
+  Reading: Query Processing & Optimization (Session 9 prep)
+
+═══════════════════════════════════════════════════════
+⚠️ COMMON STUDENT MISTAKES TO WATCH FOR
+═══════════════════════════════════════════════════════
+
+  1. Confusing Consistency (ACID) with Isolation
+  2. Thinking Read Committed prevents unrepeatable reads (it doesn't)
+  3. Assuming Serializable is always the right choice (it's the slowest)
+  4. Mixing up Shared vs Exclusive lock rules
+  5. Believing 2PL prevents deadlocks (it guarantees serializability,
+     NOT deadlock-freedom — 2PL can still deadlock)
+  6. Forgetting that COMMIT makes changes durable, not just "saved"
+
+═══════════════════════════════════════════════════════
+💡 TEACHING TIPS
+═══════════════════════════════════════════════════════
+
+  1. Use a bank transfer example for Atomicity — money must leave one
+     account AND arrive in another, or neither happens
+  2. Run the two-MySQL-session demo live — nothing beats watching a
+     dirty read actually get blocked (or allowed) in real time
+  3. Draw the transaction state diagram on the board first, before ACID
+  4. For 2PL, physically act out "growing phase" and "shrinking phase"
+     with two students role-playing transactions
+  5. Emphasize: "2PL guarantees serializability, NOT deadlock-freedom"
+     — this is a very common exam trap
+  6. Isolation levels: build a table together as a class (level vs
+     which anomalies are prevented) rather than just presenting it
+
+═══════════════════════════════════════════════════════
+  Next Session: Query Processing & Optimization (Unit IV continues)
+═══════════════════════════════════════════════════════

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>DBMS Session 7 — Deep Reference: Indexing & File Organization</title>
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.7; }
+    .page { max-width: 1000px; margin: 0 auto; background: white; padding: 50px 60px; }
+    h1 { color: #1a365d; font-size: 2.3em; margin-bottom: 8px; }
+    h2 { color: #1a365d; font-size: 1.6em; margin: 40px 0 15px; border-bottom: 3px solid #3182ce; padding-bottom: 8px; }
+    h3 { color: #2b6cb0; font-size: 1.25em; margin: 25px 0 12px; }
+    h4 { color: #2c5282; font-size: 1.05em; margin: 15px 0 8px; }
+    .subtitle { color: #718096; font-size: 1.15em; margin-bottom: 6px; }
+    .badges { margin: 18px 0 30px; }
+    .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+    .badge.green { background: #38a169; }
+    .badge.orange { background: #dd6b20; }
+    .badge.purple { background: #805ad5; }
+    .badge.red { background: #e53e3e; }
+    table { width: 100%; border-collapse: collapse; margin: 15px 0 25px; }
+    th { background: #2c5282; color: white; padding: 10px 14px; text-align: left; font-weight: 600; font-size: 0.95em; }
+    td { padding: 9px 14px; border-bottom: 1px solid #e2e8f0; font-size: 0.95em; }
+    tr:nth-child(even) { background: #f7fafc; }
+    .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+    .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+    .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+    .key-box { background: #faf5ff; border-left: 5px solid #805ad5; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+    .code-block { background: #1a202c; color: #e2e8f0; padding: 18px 22px; border-radius: 10px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.9em; overflow-x: auto; margin: 15px 0; white-space: pre; }
+    .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: 'Consolas', monospace; white-space: pre; line-height: 1.8; margin: 15px 0; font-size: 0.95em; }
+    ul, ol { margin: 10px 0 10px 25px; }
+    li { margin: 6px 0; }
+    .toc { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 25px; margin: 20px 0 30px; }
+    .toc a { color: #2c5282; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .toc ol { margin-left: 20px; }
+    .toc li { margin: 5px 0; }
+    .qbank { counter-reset: qnum; }
+    .qbank li { margin: 10px 0; }
+    .section-divider { border: none; border-top: 2px solid #e2e8f0; margin: 45px 0; }
+    .leetcode-card { background: #fff; border: 2px solid #e2e8f0; border-radius: 10px; padding: 14px 18px; margin: 10px 0; }
+    .leetcode-card strong { color: #1a365d; }
+    .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    @media print {
+        body { background: white; }
+        .page { padding: 20px; }
+        h2 { page-break-after: avoid; }
+        table, .code-block, .diagram { page-break-inside: avoid; }
+    }
+</style>
+</head>
+<body>
+<div class="page">
+
+    <span class="badge red">SESSION 7 — DEEP REFERENCE</span>
+    <h1>Indexing & File Organization</h1>
+    <p class="subtitle">Unit III Begins | How Databases Find Rows Fast</p>
+    <div class="badges">
+        <span class="badge">Heap Files</span>
+        <span class="badge green">B-Tree</span>
+        <span class="badge orange">B+ Tree</span>
+        <span class="badge purple">Hashing</span>
+    </div>
+
+    <div class="toc">
+        <strong>Contents</strong>
+        <ol>
+            <li><a href="#s1">File Organization</a></li>
+            <li><a href="#s2">Why Indexes Exist — Index Types</a></li>
+            <li><a href="#s3">B-Tree — Structure & Worked Example</a></li>
+            <li><a href="#s4">B+ Tree — Structure & Worked Example</a></li>
+            <li><a href="#s5">Hashing — Static vs Dynamic</a></li>
+            <li><a href="#s6">Hands-On: CREATE INDEX + EXPLAIN</a></li>
+            <li><a href="#s7">Full Exam Question Bank</a></li>
+            <li><a href="#s8">LeetCode Connections</a></li>
+        </ol>
+    </div>
+
+    <h2 id="s1">1. File Organization — The Foundation</h2>
+    <div class="highlight-box">
+        Before any index exists, rows must physically live somewhere on disk. The way they're arranged sets the <em>baseline</em> cost of finding them — indexes are built on top of this, not instead of it.
+    </div>
+    <table>
+        <tr><th>Type</th><th>How It Stores Rows</th><th>Best For</th><th>Weak Point</th></tr>
+        <tr><td><strong>Heap</strong></td><td>Unordered, appended anywhere free</td><td>Fast inserts — O(1)</td><td>Full scan needed to find anything — O(n)</td></tr>
+        <tr><td><strong>Sorted / Sequential</strong></td><td>Physically ordered by a key</td><td>Range queries (BETWEEN, &lt;, &gt;) — binary search, O(log n)</td><td>Insert requires shifting rows / reordering</td></tr>
+        <tr><td><strong>Hashed</strong></td><td>Bucketed by hash(key)</td><td>Exact-match lookups — O(1) average</td><td>Terrible for range queries — hashing destroys order</td></tr>
+    </table>
+
+    <h4>Worked Example</h4>
+    <div class="success-box">
+        A university's admissions table is <strong>always</strong> queried by exact roll number, never by a range. Best organization? <strong>Hashed</strong> — O(1) equality lookups, and its weakness (bad range queries) never comes into play here.
+    </div>
+
+    <h4>Exam Question</h4>
+    <p>"A log table is insert-heavy and almost never queried. Which file organization fits best, and why?" → <strong>Heap</strong> — fast inserts are what matters; search cost is irrelevant if searches rarely happen.</p>
+
+    <hr class="section-divider">
+
+    <h2 id="s2">2. Why Indexes Exist — Index Types</h2>
+    <h3>The Book Index Analogy</h3>
+    <div class="highlight-box">
+        Without an index: flip through every page looking for "Normalization" = <strong>Full Table Scan</strong>.<br>
+        With an index: jump straight to "Normalization ... pg 142" = <strong>Index Lookup</strong>.<br>
+        A database index is a separate, smaller structure that points directly at matching rows instead of scanning the whole table.
+    </div>
+
+    <h3>Three Index Types</h3>
+    <table>
+        <tr><th>Type</th><th>Built On</th><th>Reorders Data?</th><th>Density</th></tr>
+        <tr><td><strong>Primary Index</strong></td><td>The ordering key of a sorted file</td><td>Yes — file is sorted by it</td><td>Sparse</td></tr>
+        <tr><td><strong>Clustering Index</strong></td><td>A non-key ordering column</td><td>Yes — only ONE per table</td><td>Sparse</td></tr>
+        <tr><td><strong>Secondary Index</strong></td><td>Any other column</td><td>No</td><td>Always dense</td></tr>
+    </table>
+
+    <h4>Worked Example</h4>
+    <p><code>student(roll_no, name, dept_id, cgpa)</code>, physically stored sorted by <code>roll_no</code>.</p>
+    <ul>
+        <li>Index on <code>roll_no</code> → <strong>Primary Index</strong> (it's the physical sort key)</li>
+        <li>If the table were instead sorted by <code>dept_id</code> → that index would be a <strong>Clustering Index</strong></li>
+        <li>Index on <code>cgpa</code> → <strong>Secondary Index</strong> — matching rows are scattered everywhere on disk, so every single row needs its own entry (dense)</li>
+    </ul>
+
+    <div class="key-box">
+        <strong>Trick question for class:</strong> "Can a table have a Primary Index AND a Clustering Index at the same time?" → No. They're the same concept — an index on the physical row order — just named differently depending on whether that sort key happens to be the actual primary key.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s3">3. B-Tree — Structure & Worked Example</h2>
+    <div class="highlight-box">
+        A balanced tree where <strong>every node</strong> — internal and leaf — stores both keys AND data pointers.
+    </div>
+    <div class="diagram">          [ 30 | 60 ]
+         /     |     \
+   [10|20] [40|50] [70|80]</div>
+
+    <h4>Worked Insertion Example (order-3 B-Tree, max 2 keys/node)</h4>
+    <p>Insert 10, then 20, then 30:</p>
+    <div class="code-block">Insert 10  →  [10]
+Insert 20  →  [10, 20]
+Insert 30  →  node overflows (3 keys > max 2)
+              → splits, middle value (20) moves UP to become new root
+
+Result:
+        [20]
+       /    \
+    [10]   [30]</div>
+    <ul>
+        <li>Every node keeps keys sorted</li>
+        <li>Search, insert, delete all run in O(log n)</li>
+        <li>Splits propagate upward automatically — this is how the tree stays balanced</li>
+    </ul>
+    <div class="warning-box">
+        <strong>The limitation:</strong> because internal nodes carry data pointers too, each node takes more space → fewer keys fit per disk page → taller tree → more disk reads. This is the entire motivation for the B+ Tree.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s4">4. B+ Tree — Structure & Worked Example</h2>
+    <div class="highlight-box">
+        Internal nodes hold <strong>only keys</strong> (pure routing). ALL data lives in leaf nodes, which are linked together like a chain.
+    </div>
+    <div class="diagram">          [ 30 | 60 ]                  &lt;- internal: keys only, no data
+         /     |     \
+   [10|20]→[30|40|50]→[60|70|80]      &lt;- leaves: ALL data, linked list</div>
+
+    <table>
+        <tr><th></th><th>B-Tree</th><th>B+ Tree</th></tr>
+        <tr><td>Data pointers</td><td>Internal + leaf nodes</td><td>Leaf nodes ONLY</td></tr>
+        <tr><td>Internal node size</td><td>Larger (keys + data)</td><td>Smaller (keys only) → more fan-out</td></tr>
+        <tr><td>Range queries</td><td>Must re-traverse tree</td><td>Fast — just walk the leaf linked list</td></tr>
+    </table>
+
+    <h4>Worked Range Query Example</h4>
+    <p>Query: <code>SELECT * WHERE key BETWEEN 40 AND 70</code></p>
+    <div class="success-box">
+        <strong>B-Tree:</strong> must traverse from root and potentially revisit multiple subtrees, since matching data can live in internal nodes anywhere.<br><br>
+        <strong>B+ Tree:</strong> ONE root-to-leaf descent to find 40, then just <strong>walk the leaf chain rightward</strong>: 40 → 50 → 60 → 70 → done. No further tree traversal needed.
+    </div>
+
+    <h4>Worked Fan-Out / Disk-Read Example</h4>
+    <p>A B+ Tree with fan-out 100 holding 1,000,000 records needs approximately:</p>
+    <div class="code-block">log₁₀₀(1,000,000) ≈ 3 levels</div>
+    <p>Fewer levels = fewer disk reads to reach a leaf. Since disk I/O — not comparisons — is the expensive operation, this is why MySQL InnoDB, PostgreSQL, and Oracle all default to B+ Trees for indexing.</p>
+
+    <hr class="section-divider">
+
+    <h2 id="s5">5. Hashing — Static vs Dynamic</h2>
+    <table>
+        <tr><th>Static Hashing</th><th>Dynamic Hashing</th></tr>
+        <tr><td>Fixed number of buckets</td><td>Buckets grow/shrink with data</td></tr>
+        <tr><td>hash(key) % num_buckets</td><td>Extendable hashing splits buckets on demand</td></tr>
+        <tr><td>Degrades as data grows — overflow chains form</td><td>No overflow chain degradation</td></tr>
+    </table>
+
+    <h4>Worked Example — Static Hashing</h4>
+    <p>4 buckets, <code>hash(key) = key % 4</code>:</p>
+    <div class="code-block">Insert 12  →  bucket 0
+Insert 25  →  bucket 1
+Insert 8   →  bucket 0   (collision with 12 → overflow chain forms)</div>
+    <p>As more keys arrive, chains grow and lookup degrades toward O(n) — this is static hashing's core weakness. Dynamic hashing fixes this by splitting an overflowing bucket instead of chaining onto it.</p>
+
+    <div class="warning-box">
+        Hashing is excellent for equality lookups (<code>WHERE roll_no = 101</code>) but useless for range queries (<code>WHERE cgpa &gt; 8.0</code>) — the hash scrambles any natural ordering.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s6">6. Hands-On: CREATE INDEX + EXPLAIN</h2>
+    <h4>Before Indexing</h4>
+    <div class="code-block">EXPLAIN SELECT * FROM student WHERE dept_id = 1;
+-- type: ALL   (full table scan)
+-- rows: (every row in the table)</div>
+
+    <h4>Create the Index</h4>
+    <div class="code-block">CREATE INDEX idx_student_dept ON student(dept_id);</div>
+
+    <h4>After Indexing</h4>
+    <div class="code-block">EXPLAIN SELECT * FROM student WHERE dept_id = 1;
+-- type: ref   (index lookup)
+-- rows: (only matching rows)</div>
+
+    <div class="success-box">
+        The <strong>rows</strong> column dropping is the concrete, visible proof the index is being used — pause here and let it sink in before moving on.
+    </div>
+
+    <hr class="section-divider">
+
+    <h2 id="s7">7. Full Exam Question Bank</h2>
+    <ol class="qbank">
+        <li>Compare heap, sorted, and hashed file organization — one advantage and one disadvantage each.</li>
+        <li>Why can a table have only one clustering index but many secondary indexes?</li>
+        <li>Draw and label the structural difference between a B-Tree and a B+ Tree.</li>
+        <li>A B+ Tree leaf node points to another leaf node. What is this used for?</li>
+        <li>Why do database systems prefer B+ Trees over B-Trees for indexing?</li>
+        <li>Differentiate static and dynamic hashing.</li>
+        <li>Given <code>EXPLAIN</code> output showing <code>type: ALL, rows: 5000</code> before an index and <code>type: ref, rows: 3</code> after — explain what changed internally.</li>
+        <li>Give an example of a column you should NOT index, and justify it.<br>
+            <em>Model answer: a low-cardinality boolean column like <code>is_active</code>, or a write-heavy column rarely used in WHERE/JOIN — index maintenance cost outweighs the read benefit.</em></li>
+        <li>True/False with justification: "Adding more indexes always improves query performance."<br>
+            <em>Model answer: False — every index adds write overhead (INSERT/UPDATE/DELETE must maintain it too); it's a trade-off, not a free upgrade.</em></li>
+        <li>Numerical: A B+ Tree has fan-out 100 and holds 1,000,000 records. Approximately how many levels does it need? <em>(≈3 — tests understanding of why fan-out matters, not just vocabulary.)</em></li>
+    </ol>
+
+    <hr class="section-divider">
+
+    <h2 id="s8">8. LeetCode Connections</h2>
+    <div class="warning-box">
+        <strong>Being direct about this:</strong> there's no LeetCode problem that's literally "implement a B+ Tree" or "design database indexing" — that's a systems/DBMS topic, not a typical algorithmic-interview topic. The problems below build the <em>same mental muscles</em> (balanced trees, ordered structures, hashing trade-offs) and work well as optional enrichment for stronger students — not core assignment material.
+    </div>
+
+    <div class="leetcode-card">
+        <strong>LeetCode 706 — Design HashMap</strong><br>
+        Builds direct intuition for bucket collision handling. Maps straight onto the Static Hashing section.
+    </div>
+    <div class="leetcode-card">
+        <strong>LeetCode 146 — LRU Cache</strong><br>
+        Combines a hash map with a doubly linked list — nice parallel to "index gives fast lookup, structure gives fast traversal."
+    </div>
+    <div class="leetcode-card">
+        <strong>LeetCode 208 — Implement Trie (Prefix Tree)</strong><br>
+        Not a B+ Tree, but the same core idea: a tree built purely to make lookups fast. Good bridge concept.
+    </div>
+    <div class="leetcode-card">
+        <strong>LeetCode 230 — Kth Smallest Element in a BST</strong><br>
+        Reinforces ordered-tree traversal — relevant to how B-Trees keep keys sorted.
+    </div>
+    <div class="leetcode-card">
+        <strong>LeetCode 307 — Range Sum Query — Mutable</strong><br>
+        Uses a Segment Tree / Binary Indexed Tree — a real illustration of "a specialized tree exists purely to make one type of query fast," the same philosophy behind indexing.
+    </div>
+
+    <div class="footer">DBMS Session 7 — Deep Reference | Indexing & File Organization | Unit III</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,147 @@
+═══════════════════════════════════════════════════════
+  DBMS SESSION 6 — INSTRUCTOR PREPARATION SUMMARY
+═══════════════════════════════════════════════════════
+
+📅 Session Info
+  • Topic: Normalization (1NF, 2NF, 3NF, BCNF)
+  • Unit: II
+  • Duration: 2 Hours
+  • Prerequisite: Session 5 (Functional Dependencies)
+
+📦 Files Created
+  1. DBMS_Session6_Complete.docx      → Full instructor guide (theory + lab + assignment)
+  2. DBMS_Session6_Presentation.html  → Browser slides (open → Print to PDF)
+  3. This Summary                     → Quick prep cheat sheet
+
+═══════════════════════════════════════════════════════
+⏱️ TIME BREAKDOWN (120 Minutes)
+═══════════════════════════════════════════════════════
+
+  0:00-0:05  → Recap + Assignment Review (FDs, closures, candidate keys)
+  0:05-0:20  → Why Normalize? The Three Anomalies
+  0:20-0:35  → 1NF — Atomic Values, No Repeating Groups
+  0:35-0:55  → 2NF — Full Functional Dependency (No Partial Dependency)
+  0:55-1:05  → ☕ BREAK
+  1:05-1:25  → 3NF — No Transitive Dependency
+  1:25-1:45  → BCNF — Every Determinant Must Be a Super Key
+  1:45-1:55  → 🔧 HANDS-ON: Normalize StudentCourseFaculty table to BCNF
+  1:55-2:00  → Quiz + Assignment + Q&A
+
+═══════════════════════════════════════════════════════
+🎯 CORE CONCEPTS TO EMPHASIZE
+═══════════════════════════════════════════════════════
+
+  1. WHY NORMALIZE — THE THREE ANOMALIES
+     Insertion Anomaly: can't add data without unrelated data present
+     Update Anomaly: same fact repeated in many rows → update all or go inconsistent
+     Deletion Anomaly: deleting one fact accidentally deletes another
+
+  2. NORMAL FORM LADDER (each level ADDS a rule, doesn't replace it)
+     1NF: atomic values only, no repeating groups
+     2NF: 1NF + no PARTIAL dependency (only matters with composite PK)
+     3NF: 2NF + no TRANSITIVE dependency (non-key → non-key)
+     BCNF: 3NF + every determinant (LHS of any FD) must be a super key
+
+  3. PARTIAL vs TRANSITIVE DEPENDENCY (common confusion)
+     Partial: non-key attribute depends on PART of a composite key
+       → (roll_no, course_id) → grade is fine, but
+         course_id → course_name is PARTIAL (only needs part of the key)
+     Transitive: non-key attribute depends on ANOTHER non-key attribute
+       → roll_no → dept_id → dept_name (dept_name depends on dept_id, not roll_no directly)
+
+  4. 3NF vs BCNF (the subtle one)
+     3NF allows an exception: transitive dependency is OK if the
+     determinant is itself a candidate key OR the dependent attribute
+     is part of some candidate key (prime attribute).
+     BCNF removes this exception entirely — EVERY determinant must
+     be a super key, no exceptions.
+
+  5. THE NORMALIZATION TEST (ask this for every FD X → Y)
+     "Is X a super key?"
+       YES → fine, no violation
+       NO  → violates BCNF (and 3NF unless Y is a prime attribute)
+
+═══════════════════════════════════════════════════════
+🔧 HANDS-ON: NORMALIZE TO BCNF
+═══════════════════════════════════════════════════════
+
+  Starting table (violates everything):
+  StudentCourseFaculty(roll_no, course_id, course_name,
+                        faculty_id, faculty_name, dept_id,
+                        dept_name, grade)
+
+  FDs:
+    (roll_no, course_id) → grade
+    course_id → course_name, faculty_id
+    faculty_id → faculty_name, dept_id
+    dept_id → dept_name
+
+  Step-by-step result (same 4 tables students already built!):
+    → department(dept_id, dept_name)
+    → faculty(faculty_id, faculty_name, dept_id)
+    → course(course_id, course_name, faculty_id)
+    → enrollment(roll_no, course_id, grade)
+
+  Mapping Result (same as Session 2 College DB!)
+  → This connects normalization theory to their existing SQL knowledge
+
+═══════════════════════════════════════════════════════
+📋 QUICK QUIZ ANSWERS
+═══════════════════════════════════════════════════════
+
+  Q1: Table has a multivalued column stored as CSV. Violates?
+      → 1NF
+  Q2: Composite PK (A,B), and B → C alone. Violates?
+      → 2NF (partial dependency)
+  Q3: roll_no → dept_id → dept_name. Violates?
+      → 3NF (transitive dependency)
+  Q4: R(A,B,C) with A→B, B→C, B is not a candidate key. Violates?
+      → BCNF (but may still be in 3NF if C is prime)
+  Q5: Does every 3NF relation satisfy BCNF?
+      → No — BCNF is strictly stricter
+
+═══════════════════════════════════════════════════════
+📝 ASSIGNMENT
+═══════════════════════════════════════════════════════
+
+  Theory: 8 questions (anomalies, normal form definitions, 3NF vs BCNF)
+  Practical:
+    - Normalize the Hospital Management ER-derived schema (from Session 4
+      assignment) to BCNF, showing FDs at each step
+    - Identify which anomaly each unnormalized table exhibits before fixing
+    - Write CREATE TABLE statements for the final BCNF schema
+  Reading: Indexing & File Organization (Session 7 prep)
+
+═══════════════════════════════════════════════════════
+⚠️ COMMON STUDENT MISTAKES TO WATCH FOR
+═══════════════════════════════════════════════════════
+
+  1. Trying to apply 2NF rules to a table with a single-column PK
+     (partial dependency is impossible there — 2NF is automatic)
+  2. Confusing "transitive" with "partial" dependency
+  3. Stopping at 3NF when the exam/assignment asks for BCNF
+  4. Forgetting BCNF can sometimes NOT preserve all original FDs
+     (lossless join is guaranteed, dependency preservation is not)
+  5. Not re-deriving FDs after each decomposition step
+  6. Assuming higher normal form is always "better" for every use case
+     (denormalization is a valid real-world performance trade-off)
+
+═══════════════════════════════════════════════════════
+💡 TEACHING TIPS
+═══════════════════════════════════════════════════════
+
+  1. Open with a deliberately bad flat table and let students spot
+     the redundancy before naming it "anomaly"
+  2. Normalize ONE table live, one normal form at a time — don't jump
+     straight to BCNF
+  3. Reuse the College DB tables as the "answer key" — it's already
+     normalized, so reverse-engineering it builds confidence
+  4. For BCNF, drill the single question: "Is the LHS a super key?"
+  5. Show a real case where 3NF and BCNF give different answers
+     (a relation in 3NF but not BCNF) — this is the exam favorite
+  6. Mention denormalization briefly: real systems sometimes trade
+     normal form for read performance (data warehouses, reporting)
+
+═══════════════════════════════════════════════════════
+  Next Session: Indexing & File Organization (Unit III begins)
+═══════════════════════════════════════════════════════

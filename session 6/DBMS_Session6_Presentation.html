@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 6 - Normalization</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .code-block .comment { color: #68d391; }
+        .code-block .keyword { color: #63b3ed; }
+        .code-block .string { color: #f6ad55; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .fd-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .fd-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .algo-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 15px 0; }
+        .algo-box h4 { color: #1e3a5f; margin-bottom: 10px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge red">SESSION 6</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Normalization</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit II | The Most Important Session of Unit II</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">1NF</span>
+            <span class="badge green">2NF</span>
+            <span class="badge orange">3NF</span>
+            <span class="badge purple">BCNF</span>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 2: Why Normalize - Anomalies -->
+<div class="slide">
+    <h1>⚠️ Why Normalize? The Three Anomalies</h1>
+    <div class="highlight-box">
+        A poorly designed table stores the same fact in multiple places. That redundancy causes three kinds of problems every time the data changes.
+    </div>
+    <table>
+        <tr><th>Anomaly</th><th>What Happens</th><th>Example</th></tr>
+        <tr><td><strong>Insertion</strong></td><td>Can't add a fact without an unrelated fact also being present</td><td>Can't add a new course until a student enrolls in it</td></tr>
+        <tr><td><strong>Update</strong></td><td>Same fact repeated in many rows — update all or data goes inconsistent</td><td>dept_name changes → must update every student row in that dept</td></tr>
+        <tr><td><strong>Deletion</strong></td><td>Deleting one fact accidentally deletes another</td><td>Last student in a dept drops out → department record disappears too</td></tr>
+    </table>
+    <div class="warning-box">
+        <strong>The fix:</strong> Normalization is the step-by-step process of decomposing a table so each fact is stored in exactly one place.
+    </div>
+</div>
+
+<!-- SLIDE 3: 1NF -->
+<div class="slide">
+    <h1>1️⃣ First Normal Form (1NF)</h1>
+    <div class="highlight-box">
+        A relation is in 1NF if every attribute holds a single, atomic value — no repeating groups, no multivalued columns.
+    </div>
+    <div class="two-col">
+        <div>
+            <h3>❌ Violates 1NF</h3>
+            <table>
+                <tr><th>roll_no</th><th>name</th><th>phone</th></tr>
+                <tr><td>101</td><td>Rahul</td><td>9900011, 9900022</td></tr>
+            </table>
+        </div>
+        <div>
+            <h3>✅ Fixed — 1NF</h3>
+            <table>
+                <tr><th>roll_no</th><th>name</th><th>phone</th></tr>
+                <tr><td>101</td><td>Rahul</td><td>9900011</td></tr>
+                <tr><td>101</td><td>Rahul</td><td>9900022</td></tr>
+            </table>
+        </div>
+    </div>
+    <div class="success-box">
+        Multivalued attributes get their own table entirely: <strong>student_phone(roll_no, phone)</strong> — never store them as a comma-separated string.
+    </div>
+</div>
+
+<!-- SLIDE 4: 2NF -->
+<div class="slide">
+    <h1>2️⃣ Second Normal Form (2NF)</h1>
+    <div class="highlight-box">
+        1NF + <strong>no partial dependency</strong>: every non-key attribute must depend on the <em>whole</em> composite primary key, not just part of it. (Only relevant when the PK has more than one column.)
+    </div>
+    <h3>Example — Violates 2NF</h3>
+    <div class="code-block">
+enrollment(roll_no, course_id, course_name, grade)
+PK = (roll_no, course_id)
+
+FD: (roll_no, course_id) → grade      ✅ full dependency
+FD: course_id → course_name           ❌ PARTIAL — only needs course_id
+    </div>
+    <div class="success-box">
+        <strong>Fix — decompose:</strong><br>
+        enrollment(roll_no, course_id, grade)<br>
+        course(course_id, course_name)
+    </div>
+</div>
+
+<!-- SLIDE 5: 3NF -->
+<div class="slide">
+    <h1>3️⃣ Third Normal Form (3NF)</h1>
+    <div class="highlight-box">
+        2NF + <strong>no transitive dependency</strong>: a non-key attribute must not depend on another non-key attribute.
+    </div>
+    <h3>Example — Violates 3NF</h3>
+    <div class="code-block">
+student(roll_no, name, dept_id, dept_name)
+PK = roll_no
+
+FD: roll_no → dept_id                 ✅ direct
+FD: dept_id → dept_name               ❌ TRANSITIVE (non-key → non-key)
+FD: roll_no → dept_name               (only holds because of the chain above)
+    </div>
+    <div class="success-box">
+        <strong>Fix — decompose:</strong><br>
+        student(roll_no, name, dept_id)<br>
+        department(dept_id, dept_name)
+    </div>
+</div>
+
+<!-- SLIDE 6: BCNF -->
+<div class="slide">
+    <h1>🔒 Boyce-Codd Normal Form (BCNF)</h1>
+    <div class="highlight-box">
+        For <strong>every</strong> FD X → Y in the relation, X must be a super key. No exceptions — this is stricter than 3NF.
+    </div>
+    <h3>The One Question to Ask</h3>
+    <div class="algo-box">
+        <h4>For every FD X → Y:</h4>
+        <p>"Is X a super key?" → <strong>YES</strong>: fine. → <strong>NO</strong>: violates BCNF.</p>
+    </div>
+    <table>
+        <tr><th></th><th>3NF</th><th>BCNF</th></tr>
+        <tr><td>Rule</td><td>No transitive dependency (with a prime-attribute exception)</td><td>Every determinant must be a super key — no exceptions</td></tr>
+        <tr><td>Strictness</td><td>Looser</td><td>Stricter</td></tr>
+        <tr><td>Guarantee</td><td>Always dependency-preserving</td><td>Always lossless, NOT always dependency-preserving</td></tr>
+    </table>
+    <div class="warning-box">
+        Every relation in BCNF is also in 3NF — but not every 3NF relation is in BCNF. This gap is a favorite exam question.
+    </div>
+</div>
+
+<!-- SLIDE 7: Hands-On -->
+<div class="slide">
+    <h1>🔧 Hands-On: Normalize to BCNF</h1>
+    <p class="subtitle">StudentCourseFaculty — one flat table, four violations</p>
+    <div class="code-block">
+StudentCourseFaculty(roll_no, course_id, course_name,
+                      faculty_id, faculty_name, dept_id,
+                      dept_name, grade)
+
+FDs:
+  (roll_no, course_id) → grade
+  course_id → course_name, faculty_id
+  faculty_id → faculty_name, dept_id
+  dept_id → dept_name
+    </div>
+    <div class="success-box">
+        <strong>Final BCNF schema (same as Session 2 College DB!):</strong><br>
+        department(dept_id, dept_name)<br>
+        faculty(faculty_id, faculty_name, dept_id)<br>
+        course(course_id, course_name, faculty_id)<br>
+        enrollment(roll_no, course_id, grade)
+    </div>
+</div>
+
+<!-- SLIDE 8: Assignment -->
+<div class="slide">
+    <h1>📝 Session 6 Assignment</h1>
+    <h3>Theory</h3>
+    <ul>
+        <li>Define the three anomalies with one example each</li>
+        <li>Define 1NF, 2NF, 3NF, BCNF precisely</li>
+        <li>Differentiate partial dependency vs transitive dependency</li>
+        <li>Explain why every BCNF relation is in 3NF, but not vice versa</li>
+    </ul>
+    <h3>Practical</h3>
+    <ul>
+        <li>Normalize the Hospital Management schema (from Session 4) to BCNF</li>
+        <li>Identify which anomaly each unnormalized table exhibits</li>
+        <li>Write CREATE TABLE statements for the final BCNF schema</li>
+    </ul>
+</div>
+
+<!-- SLIDE 9: What's Next -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Session 7: Indexing & File Organization (Unit III begins)</p>
+        <div class="highlight-box" style="text-align:left; max-width: 600px; margin: 30px auto;">
+            You've designed a clean schema — next you'll learn how the database actually finds rows fast: B-Trees, B+ Trees, hashing, and reading query execution plans.
+        </div>
+    </div>
+    <div class="footer">DBMS Session 6 — Normalization | Unit II</div>
+</div>
+
+</body>
+</html>

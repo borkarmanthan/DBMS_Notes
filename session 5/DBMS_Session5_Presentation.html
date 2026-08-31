@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 5 - Functional Dependencies</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .code-block .comment { color: #68d391; }
+        .code-block .keyword { color: #63b3ed; }
+        .code-block .string { color: #f6ad55; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .fd-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .fd-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .algo-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 15px 0; }
+        .algo-box h4 { color: #1e3a5f; margin-bottom: 10px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge green">SESSION 5</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Functional Dependencies & Schema Refinement</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit II | The Foundation of Normalization</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">FDs</span>
+            <span class="badge">Armstrong's Axioms</span>
+            <span class="badge">Closure</span>
+            <span class="badge">Minimal Cover</span>
+            <span class="badge purple">Decomposition</span>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 2: What is FD -->
+<div class="slide">
+    <h1>🔗 What is a Functional Dependency?</h1>
+    <div class="highlight-box">
+        <strong>X → Y</strong> (X functionally determines Y) means: for any two tuples with the same X value, they <strong>MUST</strong> have the same Y value.
+    </div>
+    <div class="two-col">
+        <div>
+            <h3>Simple Analogy</h3>
+            <div class="diagram" style="font-size:0.9em;">
+If you know Roll Number
+        ↓
+You automatically know Name
+        ↓
+    roll_no → name
+            </div>
+        </div>
+        <div>
+            <h3>Formal Definition</h3>
+            <div class="success-box">
+                For all tuples t1, t2 in R:<br>
+                If t1[X] = t2[X], then t1[Y] = t2[Y]
+            </div>
+        </div>
+    </div>
+    <h3>Types of FDs</h3>
+    <table>
+        <tr><th>Type</th><th>Condition</th><th>Example</th></tr>
+        <tr><td><strong>Trivial</strong></td><td>Y ⊆ X</td><td>(roll_no, name) → roll_no</td></tr>
+        <tr><td><strong>Non-Trivial</strong></td><td>Y ⊄ X</td><td>roll_no → name</td></tr>
+        <tr><td><strong>Completely Non-Trivial</strong></td><td>X ∩ Y = ∅</td><td>roll_no → name</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 3: Armstrong's Axioms -->
+<div class="slide">
+    <h1>📐 Armstrong's Axioms</h1>
+    <p class="subtitle">Sound & Complete inference rules for deriving FDs</p>
+    <div class="two-col">
+        <div>
+            <div class="fd-card">
+                <h4>A1. Reflexivity</h4>
+                <p style="font-size:0.9em;">If Y ⊆ X, then X → Y</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: (A,B) → A, (A,B) → B</p>
+            </div>
+            <div class="fd-card" style="border-color:#38a169;">
+                <h4 style="color:#276749;">A2. Augmentation</h4>
+                <p style="font-size:0.9em;">If X → Y, then XZ → YZ</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: A→B implies AC→BC</p>
+            </div>
+            <div class="fd-card" style="border-color:#e53e3e;">
+                <h4 style="color:#c53030;">A3. Transitivity</h4>
+                <p style="font-size:0.9em;">If X → Y and Y → Z, then X → Z</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: roll_no→dept, dept→hod ⇒ roll_no→hod</p>
+            </div>
+        </div>
+        <div>
+            <div class="fd-card" style="border-color:#805ad5;">
+                <h4 style="color:#6b21a8;">D1. Union</h4>
+                <p style="font-size:0.9em;">If X → Y and X → Z, then X → YZ</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: roll_no→name, roll_no→dept ⇒ roll_no→(name,dept)</p>
+            </div>
+            <div class="fd-card" style="border-color:#f59e0b;">
+                <h4 style="color:#c05621;">D2. Decomposition</h4>
+                <p style="font-size:0.9em;">If X → YZ, then X → Y and X → Z</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: roll_no→(name,dept) ⇒ roll_no→name, roll_no→dept</p>
+            </div>
+            <div class="fd-card" style="border-color:#dd6b20;">
+                <h4 style="color:#c05621;">D3. Pseudo-Transitivity</h4>
+                <p style="font-size:0.9em;">If X → Y and WY → Z, then WX → Z</p>
+                <p style="font-size:0.85em; color:#4a5568;">Ex: A→B and BC→D ⇒ AC→D</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 4: Attribute Closure -->
+<div class="slide">
+    <h1>🔍 Attribute Closure (X⁺)</h1>
+    <div class="highlight-box">
+        <strong>X⁺</strong> = All attributes that can be determined by X using the given FDs.
+    </div>
+    <div class="algo-box">
+        <h4>Algorithm: Compute X⁺</h4>
+        <div style="font-family: monospace; font-size: 0.9em; color: #4a5568; line-height: 1.8;">
+1. X⁺ = X<br>
+2. Repeat until no change:<br>
+&nbsp;&nbsp;&nbsp;a. For each FD Y → Z in F:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b. If Y ⊆ X⁺ and Z ⊄ X⁺:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c. X⁺ = X⁺ ∪ Z<br>
+3. Return X⁺
+        </div>
+    </div>
+    <div class="two-col">
+        <div>
+            <h3>Example</h3>
+            <p style="font-size:0.9em;">R(A,B,C,D,E), F = {AB→C, C→D, D→E}</p>
+            <div class="diagram" style="font-size:0.85em; text-align:left;">
+Find (AB)⁺:
+
+Start:  {A, B}
+AB→C:  add C → {A,B,C}
+C→D:   add D → {A,B,C,D}
+D→E:   add E → {A,B,C,D,E}
+
+Result: (AB)⁺ = ALL
+AB is a super key!
+            </div>
+        </div>
+        <div>
+            <h3>Uses of Closure</h3>
+            <ul>
+                <li><strong>Find candidate keys</strong></li>
+                <li>Check if X → Y is implied</li>
+                <li>Find minimal cover</li>
+            </ul>
+            <div class="success-box">
+                <strong>Finding Candidate Keys:</strong><br>
+                1. Attributes only on LHS → must be in key<br>
+                2. Attributes only on RHS → never in key<br>
+                3. Compute closures of combinations
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 5: Minimal Cover -->
+<div class="slide">
+    <h1>✂️ Minimal Cover (Canonical Cover)</h1>
+    <div class="highlight-box">
+        A <strong>minimal cover</strong> Fc is an equivalent set of FDs that is:
+        <ol>
+            <li>Minimal (no extraneous attributes)</li>
+            <li>Unique LHS for each FD</li>
+            <li>No redundant FDs</li>
+        </ol>
+    </div>
+    <div class="algo-box">
+        <h4>Algorithm</h4>
+        <div style="font-family: monospace; font-size: 0.9em; color: #4a5568; line-height: 1.8;">
+Step 1: Decompose RHS (single attribute each)<br>
+Step 2: Remove extraneous attributes from LHS<br>
+Step 3: Remove redundant FDs
+        </div>
+    </div>
+    <div class="two-col">
+        <div>
+            <h3>Example</h3>
+            <p style="font-size:0.9em;">F = {A→BC, B→C, A→B, AB→C}</p>
+            <div class="diagram" style="font-size:0.85em; text-align:left;">
+Step 1: Decompose
+{A→B, A→C, B→C, A→B, AB→C}
+= {A→B, A→C, B→C, AB→C}
+
+Step 2: Check AB→C
+Is A extraneous? (B)⁺ = {B,C}
+C ∈ {B,C}? YES! Replace with B→C
+But B→C already exists. Remove AB→C.
+
+Step 3: Check A→C
+Remove it: (A)⁺ with {A→B, B→C}
+= {A,B,C}. C ∈ (A)⁺? YES!
+A→C is redundant.
+
+Fc = {A→B, B→C}
+            </div>
+        </div>
+        <div>
+            <h3>Verification</h3>
+            <div class="success-box">
+                Can Fc derive all original FDs?<br><br>
+                A→BC: A→B (given), A→C (A→B→C), union ✓<br>
+                B→C: Given in Fc ✓<br>
+                A→B: Given in Fc ✓<br>
+                AB→C: B→C (given), augment ✓
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 6: Decomposition -->
+<div class="slide">
+    <h1>🗂️ Schema Decomposition</h1>
+    <div class="two-col">
+        <div>
+            <h3>Why Decompose?</h3>
+            <div class="warning-box">
+                <strong>Insertion Anomaly:</strong><br>
+                Can't insert dept without a student<br><br>
+                <strong>Update Anomaly:</strong><br>
+                Change HOD → update all rows<br><br>
+                <strong>Deletion Anomaly:</strong><br>
+                Delete last student → lose dept info
+            </div>
+        </div>
+        <div>
+            <h3>Good Decomposition</h3>
+            <div class="success-box">
+                <strong>Lossless Join:</strong><br>
+                R1 ⋈ R2 = R (no data lost)<br><br>
+                <strong>Test:</strong> R1 ∩ R2 → R1 OR R1 ∩ R2 → R2<br><br>
+                <strong>Dependency Preserving:</strong><br>
+                All FDs checkable without joins
+            </div>
+        </div>
+    </div>
+    <div class="code-block">
+<span class="comment">-- Before: Redundant, anomaly-prone</span>
+STUDENT_DEPT(roll_no, name, dept_id, dept_name, hod)
+
+<span class="comment">-- After: Clean decomposition</span>
+STUDENT(roll_no, name, dept_id)      <span class="comment">-- roll_no → name, dept_id</span>
+DEPARTMENT(dept_id, dept_name, hod)   <span class="comment">-- dept_id → dept_name, hod</span>
+
+<span class="comment">-- Check Lossless: R1 ∩ R2 = {dept_id}</span>
+<span class="comment">-- dept_id → R2? YES! (dept_id is PK of DEPARTMENT)</span>
+    </div>
+</div>
+
+<!-- SLIDE 7: Problems -->
+<div class="slide">
+    <h1>📝 Practice Problems</h1>
+
+    <div class="fd-card">
+        <strong>Q1.</strong> R(A,B,C), F={A→B, B→C}. Find A⁺.
+        <p style="color:#38a169; font-weight:600; margin-top:6px;">A⁺ = {A,B,C}. A is candidate key.</p>
+    </div>
+
+    <div class="fd-card">
+        <strong>Q2.</strong> R(A,B,C,D), F={AB→C, C→D, D→A}. Find (BC)⁺.
+        <p style="color:#38a169; font-weight:600; margin-top:6px;">(BC)⁺ = {A,B,C,D}. BC is super key.</p>
+    </div>
+
+    <div class="fd-card">
+        <strong>Q3.</strong> Find candidate keys for R(A,B,C,D), F={A→B, B→C, C→D}.
+        <p style="color:#38a169; font-weight:600; margin-top:6px;">Only LHS: A. (A)⁺ = ALL. Candidate key: A.</p>
+    </div>
+
+    <div class="fd-card">
+        <strong>Q4.</strong> Minimal cover of F={A→BC, B→C, A→B, AB→C}.
+        <p style="color:#38a169; font-weight:600; margin-top:6px;">Fc = {A→B, B→C}</p>
+    </div>
+
+    <div class="fd-card">
+        <strong>Q5.</strong> Prove: If A→B and BC→D, then AC→D.
+        <p style="color:#38a169; font-weight:600; margin-top:6px;">1. A→B (Given) → 2. AC→BC (Augment) → 3. BC→D (Given) → 4. AC→D (Transitivity)</p>
+    </div>
+</div>
+
+<!-- SLIDE 8: Assignment -->
+<div class="slide">
+    <h1>📝 Session 5 Assignment</h1>
+    <p class="subtitle">Complete before Session 6 (Normalization)</p>
+
+    <h3>Theory (10 Questions)</h3>
+    <ol>
+        <li>Define Functional Dependency with example.</li>
+        <li>Differentiate Trivial, Non-Trivial, Completely Non-Trivial FDs.</li>
+        <li>State Armstrong's Axioms with examples.</li>
+        <li>Prove Union rule: If X→Y and X→Z, then X→YZ.</li>
+        <li>What is Attribute Closure? Explain algorithm.</li>
+        <li>Find candidate keys for R(A,B,C,D), F={AB→C, C→D, D→A}.</li>
+        <li>What is Minimal Cover? Find Fc for F={A→BC, B→C, A→B, AB→C}.</li>
+        <li>Explain Lossless Join Decomposition.</li>
+        <li>What is Dependency Preservation? Why important?</li>
+        <li>Decompose R(emp_id, emp_name, dept_id, dept_name, location) into 3NF.</li>
+    </ol>
+
+    <div class="highlight-box">
+        <strong>Reading for Session 6:</strong> Normal Forms — 1NF, 2NF, 3NF, BCNF
+    </div>
+</div>
+
+<!-- SLIDE 9: What's Next -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size:1.2em;">Session 6: Normalization (1NF → 2NF → 3NF → BCNF)</p>
+        <div style="margin: 30px auto; max-width: 600px; text-align: left;">
+            <div class="highlight-box">
+                <strong>Topics:</strong><br>
+                • First Normal Form (1NF)<br>
+                • Second Normal Form (2NF)<br>
+                • Third Normal Form (3NF)<br>
+                • Boyce-Codd Normal Form (BCNF)<br>
+                • When to stop normalizing<br>
+                • <strong>Most important session of Unit II!</strong>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        DBMS Course for EC 2nd Year | Session 5 Complete | Unit II — Functional Dependencies
+    </div>
+</div>
+
+</body>
+</html>

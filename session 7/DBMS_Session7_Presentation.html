@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 7 - Indexing & File Organization</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .fd-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .fd-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .algo-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 15px 0; }
+        .algo-box h4 { color: #1e3a5f; margin-bottom: 10px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge purple">SESSION 7</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Indexing & File Organization</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit III Begins | How Databases Find Rows Fast</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">Heap Files</span>
+            <span class="badge green">B-Tree</span>
+            <span class="badge orange">B+ Tree</span>
+            <span class="badge purple">Hashing</span>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 2: File Organization -->
+<div class="slide">
+    <h1>🗂️ File Organization</h1>
+    <div class="highlight-box">
+        Before indexes exist at all, rows have to be physically stored somewhere on disk. How they're stored determines how fast they can be found.
+    </div>
+    <table>
+        <tr><th>Type</th><th>How It Stores Rows</th><th>Best For</th><th>Weak Point</th></tr>
+        <tr><td><strong>Heap</strong></td><td>Unordered, appended anywhere free</td><td>Fast inserts</td><td>Full scan needed to find anything</td></tr>
+        <tr><td><strong>Sorted / Sequential</strong></td><td>Physically ordered by a key</td><td>Range queries (BETWEEN, &lt;, &gt;)</td><td>Insert requires reordering / gaps</td></tr>
+        <tr><td><strong>Hashed</strong></td><td>Bucketed by hash(key)</td><td>Exact-match lookups</td><td>Terrible for range queries</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 3: Why Indexes -->
+<div class="slide">
+    <h1>📇 Why Indexes? The Book Index Analogy</h1>
+    <div class="two-col">
+        <div>
+            <h3>Without an Index</h3>
+            <div class="diagram">Flip through every single page
+looking for "Normalization"
+= Full Table Scan</div>
+        </div>
+        <div>
+            <h3>With an Index</h3>
+            <div class="diagram">Jump straight to the index page
+"Normalization ... pg 142"
+= Index Lookup</div>
+        </div>
+    </div>
+    <h3>Index Types</h3>
+    <table>
+        <tr><th>Type</th><th>Built On</th><th>Reorders Data?</th><th>Density</th></tr>
+        <tr><td><strong>Primary Index</strong></td><td>The ordering key of a sorted file</td><td>Yes (file is sorted by it)</td><td>Sparse</td></tr>
+        <tr><td><strong>Clustering Index</strong></td><td>A non-key ordering column</td><td>Yes — only ONE per table</td><td>Sparse</td></tr>
+        <tr><td><strong>Secondary Index</strong></td><td>Any other column</td><td>No</td><td>Always dense</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 4: B-Tree -->
+<div class="slide">
+    <h1>🌳 B-Tree Structure</h1>
+    <div class="highlight-box">
+        A balanced tree where every node holds keys AND data pointers — including internal (non-leaf) nodes.
+    </div>
+    <div class="diagram">
+              [ 30 | 60 ]
+             /     |     \
+       [10|20] [40|50] [70|80]
+    </div>
+    <ul>
+        <li>Every node keeps keys sorted</li>
+        <li>Search, insert, and delete all run in O(log n)</li>
+        <li>Data pointers live in internal nodes too — this is the key difference from B+ Tree</li>
+    </ul>
+</div>
+
+<!-- SLIDE 5: B+ Tree -->
+<div class="slide">
+    <h1>🌲 B+ Tree — Why Databases Prefer It</h1>
+    <div class="diagram">
+              [ 30 | 60 ]                 <- internal: keys only, no data
+             /     |     \
+       [10|20]→[30|40|50]→[60|70|80]      <- leaves: ALL data, linked list
+    </div>
+    <table>
+        <tr><th></th><th>B-Tree</th><th>B+ Tree</th></tr>
+        <tr><td>Data pointers</td><td>Internal + leaf nodes</td><td>Leaf nodes ONLY</td></tr>
+        <tr><td>Internal node size</td><td>Larger (keys + data)</td><td>Smaller (keys only) → more fan-out</td></tr>
+        <tr><td>Range queries</td><td>Must re-traverse tree</td><td>Fast — just walk the leaf linked list</td></tr>
+    </table>
+    <div class="success-box">
+        Smaller internal nodes fit more keys per disk page → shorter tree → fewer disk reads. This is why almost every production database index is a B+ Tree, not a plain B-Tree.
+    </div>
+</div>
+
+<!-- SLIDE 6: Hashing -->
+<div class="slide">
+    <h1>#️⃣ Hashing</h1>
+    <div class="two-col">
+        <div>
+            <h3>Static Hashing</h3>
+            <ul>
+                <li>Fixed number of buckets</li>
+                <li>hash(key) % num_buckets</li>
+                <li>Degrades as data grows — overflow chains form</li>
+            </ul>
+        </div>
+        <div>
+            <h3>Dynamic Hashing</h3>
+            <ul>
+                <li>Buckets grow/shrink with data</li>
+                <li>Extendable hashing splits buckets on demand</li>
+                <li>No overflow chain degradation</li>
+            </ul>
+        </div>
+    </div>
+    <div class="warning-box">
+        Hashing is excellent for <strong>equality</strong> lookups (WHERE roll_no = 101) but useless for <strong>range</strong> queries (WHERE cgpa &gt; 8.0) — the hash scrambles any natural ordering.
+    </div>
+</div>
+
+<!-- SLIDE 7: Hands-On -->
+<div class="slide">
+    <h1>🔧 Hands-On: CREATE INDEX + EXPLAIN</h1>
+    <h3>Before Indexing</h3>
+    <div class="code-block">EXPLAIN SELECT * FROM student WHERE dept_id = 1;
+-- type: ALL   rows: (every row in the table)</div>
+    <h3>Create the Index</h3>
+    <div class="code-block">CREATE INDEX idx_student_dept ON student(dept_id);</div>
+    <h3>After Indexing</h3>
+    <div class="code-block">EXPLAIN SELECT * FROM student WHERE dept_id = 1;
+-- type: ref   rows: (only matching rows)</div>
+    <div class="success-box">
+        The <strong>rows</strong> column dropping is the concrete, visible proof the index is being used — this is the moment to pause and let it sink in.
+    </div>
+</div>
+
+<!-- SLIDE 8: Assignment -->
+<div class="slide">
+    <h1>📝 Session 7 Assignment</h1>
+    <h3>Theory</h3>
+    <ul>
+        <li>Compare heap, sorted, and hashed file organization</li>
+        <li>Differentiate primary, clustering, and secondary indexes</li>
+        <li>Explain why B+ Trees are preferred over B-Trees in databases</li>
+    </ul>
+    <h3>Practical</h3>
+    <ul>
+        <li>Create indexes on 3 frequently-queried columns in the College DB</li>
+        <li>Run EXPLAIN before and after each — document the difference</li>
+        <li>Identify one column that should NOT be indexed, and explain why</li>
+    </ul>
+</div>
+
+<!-- SLIDE 9: What's Next -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Session 8: Transactions & Concurrency Control (Unit IV begins)</p>
+        <div class="highlight-box" style="text-align:left; max-width: 600px; margin: 30px auto;">
+            Your schema is designed and your queries are fast — next you'll learn how databases keep data correct when many users read and write at the same time.
+        </div>
+    </div>
+    <div class="footer">DBMS Session 7 — Indexing & File Organization | Unit III</div>
+</div>
+
+</body>
+</html>

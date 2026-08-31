@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 8 - Transactions & Concurrency Control</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .fd-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .fd-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .algo-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 15px 0; }
+        .algo-box h4 { color: #1e3a5f; margin-bottom: 10px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<!-- SLIDE 1: Title -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge orange">SESSION 8</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Transactions & Concurrency Control</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit IV Begins | Keeping Data Correct Under Concurrent Access</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">ACID</span>
+            <span class="badge green">Locking</span>
+            <span class="badge purple">Isolation Levels</span>
+            <span class="badge red">Deadlocks</span>
+        </div>
+    </div>
+</div>
+
+<!-- SLIDE 2: Transaction States -->
+<div class="slide">
+    <h1>🔄 What is a Transaction?</h1>
+    <div class="highlight-box">
+        A transaction is a sequence of one or more operations treated as a single logical unit of work — it either completes entirely, or has no effect at all.
+    </div>
+    <h3>Transaction State Diagram</h3>
+    <div class="diagram">
+Active → Partially Committed → Committed
+   ↓
+Failed → Aborted
+    </div>
+    <ul>
+        <li><strong>Active:</strong> operations are being executed</li>
+        <li><strong>Partially Committed:</strong> last operation done, not yet made durable</li>
+        <li><strong>Committed:</strong> changes are permanent</li>
+        <li><strong>Failed / Aborted:</strong> something went wrong, all changes rolled back</li>
+    </ul>
+</div>
+
+<!-- SLIDE 3: ACID -->
+<div class="slide">
+    <h1>🧪 ACID Properties</h1>
+    <table>
+        <tr><th>Property</th><th>Guarantee</th><th>Example</th></tr>
+        <tr><td><strong>Atomicity</strong></td><td>All operations succeed, or none do</td><td>Bank transfer: debit + credit both happen, or neither does</td></tr>
+        <tr><td><strong>Consistency</strong></td><td>DB moves from one valid state to another</td><td>Total money in the bank stays the same after a transfer</td></tr>
+        <tr><td><strong>Isolation</strong></td><td>Concurrent transactions don't see each other's uncommitted state</td><td>You never see a half-finished transfer from another user</td></tr>
+        <tr><td><strong>Durability</strong></td><td>Committed changes survive even a crash</td><td>Power failure right after COMMIT doesn't lose the transfer</td></tr>
+    </table>
+</div>
+
+<!-- SLIDE 4: Concurrency Problems -->
+<div class="slide">
+    <h1>⚠️ Four Concurrency Problems</h1>
+    <table>
+        <tr><th>Problem</th><th>What Happens</th></tr>
+        <tr><td><strong>Dirty Read</strong></td><td>Reading another transaction's UNCOMMITTED data</td></tr>
+        <tr><td><strong>Lost Update</strong></td><td>Two transactions overwrite each other's write</td></tr>
+        <tr><td><strong>Unrepeatable Read</strong></td><td>Same query, different result, within one transaction</td></tr>
+        <tr><td><strong>Phantom Read</strong></td><td>A re-run query returns brand new rows that appeared</td></tr>
+    </table>
+    <div class="warning-box">
+        These four problems only happen because transactions run <strong>concurrently</strong>. Concurrency control exists specifically to prevent them — with a cost in performance.
+    </div>
+</div>
+
+<!-- SLIDE 5: Locking -->
+<div class="slide">
+    <h1>🔒 Locking & Two-Phase Locking</h1>
+    <div class="two-col">
+        <div>
+            <div class="fd-card">
+                <h4>Shared (S) Lock</h4>
+                <p style="font-size:0.9em;">For reading. Multiple transactions can hold an S lock on the same item together.</p>
+            </div>
+        </div>
+        <div>
+            <div class="fd-card" style="border-color:#e53e3e;">
+                <h4 style="color:#c53030;">Exclusive (X) Lock</h4>
+                <p style="font-size:0.9em;">For writing. Only ONE transaction can hold an X lock — blocks all others.</p>
+            </div>
+        </div>
+    </div>
+    <h3>Two-Phase Locking (2PL)</h3>
+    <div class="diagram">
+Growing Phase          Shrinking Phase
+(acquire locks only) → (release locks only)
+    </div>
+    <div class="success-box">
+        2PL guarantees <strong>serializability</strong> — but it does NOT guarantee freedom from deadlocks. That distinction is a very common exam trap.
+    </div>
+</div>
+
+<!-- SLIDE 6: Isolation Levels -->
+<div class="slide">
+    <h1>🎚️ Isolation Levels</h1>
+    <table>
+        <tr><th>Level</th><th>Dirty Read</th><th>Unrepeatable Read</th><th>Phantom Read</th></tr>
+        <tr><td><strong>Read Uncommitted</strong></td><td>❌ Allowed</td><td>❌ Allowed</td><td>❌ Allowed</td></tr>
+        <tr><td><strong>Read Committed</strong></td><td>✅ Prevented</td><td>❌ Allowed</td><td>❌ Allowed</td></tr>
+        <tr><td><strong>Repeatable Read</strong></td><td>✅ Prevented</td><td>✅ Prevented</td><td>❌ Allowed</td></tr>
+        <tr><td><strong>Serializable</strong></td><td>✅ Prevented</td><td>✅ Prevented</td><td>✅ Prevented</td></tr>
+    </table>
+    <div class="warning-box">
+        Stricter isolation = safer data, but more locking and blocking = slower throughput. Choosing an isolation level is a trade-off, not a default to leave untouched.
+    </div>
+</div>
+
+<!-- SLIDE 7: Deadlocks + Hands-On -->
+<div class="slide">
+    <h1>💀 Deadlocks & Hands-On</h1>
+    <div class="highlight-box">
+        A deadlock happens when Transaction A holds a lock Transaction B needs, and Transaction B holds a lock Transaction A needs — both wait forever.
+    </div>
+    <h3>Hands-On: Two MySQL Sessions</h3>
+    <div class="code-block">-- Session A
+START TRANSACTION;
+UPDATE student SET cgpa = 9.5 WHERE roll_no = 101;
+-- do NOT commit yet
+
+-- Session B (default Read Committed)
+SELECT cgpa FROM student WHERE roll_no = 101;
+-- returns the OLD value: dirty read prevented by default
+
+-- Only after Session A commits does Session B see 9.5</div>
+</div>
+
+<!-- SLIDE 8: Assignment -->
+<div class="slide">
+    <h1>📝 Session 8 Assignment</h1>
+    <h3>Theory</h3>
+    <ul>
+        <li>Define ACID with one example for each property</li>
+        <li>Explain all four concurrency problems with examples</li>
+        <li>Differentiate the four isolation levels</li>
+        <li>Explain why 2PL guarantees serializability but not deadlock-freedom</li>
+    </ul>
+    <h3>Practical</h3>
+    <ul>
+        <li>Simulate a dirty read and a lost update using two MySQL sessions</li>
+        <li>Document behavior at all four isolation levels</li>
+        <li>Design a deadlock scenario using student and enrollment tables</li>
+    </ul>
+</div>
+
+<!-- SLIDE 9: What's Next -->
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Session 9: Query Processing & Optimization (Unit IV continues)</p>
+        <div class="highlight-box" style="text-align:left; max-width: 600px; margin: 30px auto;">
+            You now know how the database keeps data correct — next you'll learn how it decides the fastest way to actually execute a query, using everything you've learned about indexes and joins.
+        </div>
+    </div>
+    <div class="footer">DBMS Session 8 — Transactions & Concurrency Control | Unit IV</div>
+</div>
+
+</body>
+</html>
