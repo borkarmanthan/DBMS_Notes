@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 10 - Database Recovery & Backup</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .fd-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .fd-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .algo-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 15px 0; }
+        .algo-box h4 { color: #1e3a5f; margin-bottom: 10px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge red">SESSION 10</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Database Recovery & Backup</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit IV Continues | Surviving a Crash Without Losing Data</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">WAL</span>
+            <span class="badge green">Checkpoints</span>
+            <span class="badge orange">ARIES</span>
+            <span class="badge purple">Backups</span>
+        </div>
+    </div>
+</div>
+
+<div class="slide">
+    <h1>💥 Why Recovery? Types of Failures</h1>
+    <table>
+        <tr><th>Failure Type</th><th>What Happens</th></tr>
+        <tr><td><strong>Transaction Failure</strong></td><td>A logical error, e.g. a constraint violation — only that transaction is affected</td></tr>
+        <tr><td><strong>System Crash</strong></td><td>Power/OS failure — everything in volatile memory is lost</td></tr>
+        <tr><td><strong>Disk Failure</strong></td><td>Non-volatile storage itself is physically damaged</td></tr>
+    </table>
+    <div class="warning-box">Backups protect against disk failure. Logs and checkpoints protect against crashes. They are NOT interchangeable safety nets.</div>
+</div>
+
+<div class="slide">
+    <h1>📝 Write-Ahead Logging (WAL)</h1>
+    <div class="highlight-box">
+        <strong>The core rule:</strong> the log record for a change MUST be written to stable storage BEFORE the actual data page is written to disk.
+    </div>
+    <h3>Log Record Format</h3>
+    <div class="code-block">&lt;Transaction_id, Data_item, Old_value, New_value&gt;</div>
+    <div class="success-box">This single rule is what makes recovery possible at all — if the system crashes mid-write, the log already knows what was intended.</div>
+</div>
+
+<div class="slide">
+    <h1>✅ Checkpoints</h1>
+    <div class="highlight-box">A periodic snapshot recording which transactions were active at that moment.</div>
+    <div class="diagram">Log start ----[checkpoint]----[checkpoint]----CRASH
+                                        ↑
+                          Recovery only replays from HERE, not from log start</div>
+    <p>Without checkpoints, every recovery would have to replay the ENTIRE log history — checkpoints make recovery time bounded and predictable.</p>
+</div>
+
+<div class="slide">
+    <h1>🔁 Deferred vs Immediate Update</h1>
+    <table>
+        <tr><th></th><th>Deferred Update</th><th>Immediate Update</th></tr>
+        <tr><td>When DB is written</td><td>Only after commit</td><td>Can happen before commit</td></tr>
+        <tr><td>REDO needed?</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>UNDO needed?</td><td>No — nothing was written early</td><td>Yes — for uncommitted writes</td></tr>
+    </table>
+    <h3>ARIES — 3 Phases</h3>
+    <div class="diagram">Analysis  →  Redo  →  Undo</div>
+    <p style="font-size:0.9em;">Analysis: find transactions active at crash. Redo: repeat history since last checkpoint. Undo: roll back the "loser" transactions.</p>
+</div>
+
+<div class="slide">
+    <h1>💾 Backup Strategies</h1>
+    <table>
+        <tr><th>Type</th><th>What's Backed Up</th></tr>
+        <tr><td><strong>Full</strong></td><td>The entire database, every time</td></tr>
+        <tr><td><strong>Incremental</strong></td><td>Only changes since the last backup (of any type)</td></tr>
+        <tr><td><strong>Differential</strong></td><td>Only changes since the last FULL backup</td></tr>
+    </table>
+</div>
+
+<div class="slide">
+    <h1>🔧 Hands-On: Backup, Restore & Binary Log</h1>
+    <div class="code-block"># Full backup
+mysqldump -u root -p college_demo > college_backup.sql
+
+# Simulate loss (on a throwaway copy!)
+DROP TABLE student;
+
+# Restore
+mysql -u root -p college_demo < college_backup.sql
+
+# Inspect MySQL's own write-ahead-style log
+SHOW BINARY LOGS;
+SHOW BINLOG EVENTS IN 'binlog.000001';</div>
+    <div class="success-box">The binary log IS a real-world example of write-ahead logging — every change is logged, enabling replay-based recovery.</div>
+</div>
+
+<div class="slide">
+    <h1>📝 Session 10 Assignment</h1>
+    <h3>Theory</h3>
+    <ul>
+        <li>Describe the three failure types</li>
+        <li>Explain WAL and why the order of writes matters</li>
+        <li>Compare deferred vs immediate update recovery</li>
+    </ul>
+    <h3>Practical</h3>
+    <ul>
+        <li>Take a full mysqldump backup of college_demo</li>
+        <li>Simulate a table drop on a throwaway copy, restore from backup</li>
+        <li>Inspect binary log events for 2-3 recent transactions</li>
+    </ul>
+</div>
+
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Session 11: Views, Triggers & Stored Procedures</p>
+        <div class="highlight-box" style="text-align:left; max-width: 600px; margin: 30px auto;">
+            Your data survives crashes — next you'll automate logic directly inside the database itself.
+        </div>
+    </div>
+    <div class="footer">DBMS Session 10 — Database Recovery & Backup | Unit IV</div>
+</div>
+
+</body>
+</html>

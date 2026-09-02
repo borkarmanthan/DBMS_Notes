@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 11 - Views, Triggers & Stored Procedures</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .fd-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .fd-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .algo-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 15px 0; }
+        .algo-box h4 { color: #1e3a5f; margin-bottom: 10px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge green">SESSION 11</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">Views, Triggers & Stored Procedures</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit IV Continues | The Most Practical Session Yet</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">Views</span>
+            <span class="badge orange">Procedures</span>
+            <span class="badge purple">Functions</span>
+            <span class="badge red">Triggers</span>
+        </div>
+    </div>
+</div>
+
+<div class="slide">
+    <h1>🪟 Views</h1>
+    <div class="highlight-box">A view is a virtual table defined by a stored query — it doesn't store data itself, it re-runs its query each time you access it.</div>
+    <div class="code-block">CREATE VIEW student_course_view AS
+SELECT s.roll_no, s.name, c.course_name, e.grade
+FROM student s
+JOIN enrollment e ON s.roll_no = e.roll_no
+JOIN course c ON e.course_id = c.course_id;
+
+SELECT * FROM student_course_view WHERE grade = 'A';</div>
+    <div class="warning-box">A view is updatable ONLY if it maps to a single base table with no aggregates, GROUP BY, DISTINCT, or subqueries in the SELECT list.</div>
+</div>
+
+<div class="slide">
+    <h1>⚙️ Stored Procedures</h1>
+    <div class="highlight-box">A precompiled, named block of SQL that takes parameters and can be called repeatedly — keeps logic inside the database.</div>
+    <div class="code-block">DELIMITER //
+CREATE PROCEDURE GetStudentCGPA(IN p_roll_no INT, OUT p_cgpa DECIMAL(3,2))
+BEGIN
+  SELECT cgpa INTO p_cgpa FROM student WHERE roll_no = p_roll_no;
+END //
+DELIMITER ;
+
+CALL GetStudentCGPA(101, @cgpa);
+SELECT @cgpa;</div>
+    <table>
+        <tr><th>Parameter</th><th>Direction</th></tr>
+        <tr><td><strong>IN</strong></td><td>Value passed into the procedure (default)</td></tr>
+        <tr><td><strong>OUT</strong></td><td>Value passed back to the caller</td></tr>
+        <tr><td><strong>INOUT</strong></td><td>Both directions</td></tr>
+    </table>
+</div>
+
+<div class="slide">
+    <h1>🆚 Functions vs Procedures</h1>
+    <table>
+        <tr><th></th><th>Function</th><th>Procedure</th></tr>
+        <tr><td>Return value</td><td>MUST return exactly one value</td><td>May return nothing directly</td></tr>
+        <tr><td>Usable in SELECT?</td><td>Yes — SELECT my_func(x)</td><td>No — called standalone with CALL</td></tr>
+        <tr><td>Side effects</td><td>Discouraged/restricted</td><td>Common (INSERT, UPDATE, etc.)</td></tr>
+    </table>
+</div>
+
+<div class="slide">
+    <h1>⚡ Triggers</h1>
+    <div class="highlight-box">Code that fires AUTOMATICALLY on INSERT/UPDATE/DELETE — no explicit call needed.</div>
+    <table>
+        <tr><th>Timing</th><th>Good For</th></tr>
+        <tr><td><strong>BEFORE</strong></td><td>Validation, modifying the incoming value</td></tr>
+        <tr><td><strong>AFTER</strong></td><td>Audit logging, cascading side effects</td></tr>
+    </table>
+    <p><strong>NEW</strong> = row after the change (unavailable on DELETE). <strong>OLD</strong> = row before the change (unavailable on INSERT).</p>
+</div>
+
+<div class="slide">
+    <h1>🔧 Hands-On: Audit Trigger</h1>
+    <div class="code-block">CREATE TABLE student_audit (
+  audit_id INT AUTO_INCREMENT PRIMARY KEY,
+  roll_no INT, old_cgpa DECIMAL(3,2), new_cgpa DECIMAL(3,2),
+  changed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+DELIMITER //
+CREATE TRIGGER trg_cgpa_update
+BEFORE UPDATE ON student
+FOR EACH ROW
+BEGIN
+  IF OLD.cgpa &lt;&gt; NEW.cgpa THEN
+    INSERT INTO student_audit(roll_no, old_cgpa, new_cgpa)
+    VALUES (OLD.roll_no, OLD.cgpa, NEW.cgpa);
+  END IF;
+END //
+DELIMITER ;
+
+UPDATE student SET cgpa = 9.8 WHERE roll_no = 101;
+SELECT * FROM student_audit;</div>
+    <div class="success-box">Updating the row and immediately querying the audit table to see the change logged is the payoff moment of this whole session.</div>
+</div>
+
+<div class="slide">
+    <h1>📝 Session 11 Assignment</h1>
+    <h3>Theory</h3>
+    <ul>
+        <li>Explain when a view is and isn't updatable</li>
+        <li>Differentiate functions from procedures</li>
+        <li>Explain NEW and OLD in the context of each trigger timing</li>
+    </ul>
+    <h3>Practical</h3>
+    <ul>
+        <li>Create 1 view joining at least 3 tables</li>
+        <li>Create 1 stored procedure using IN and OUT parameters</li>
+        <li>Create 1 trigger logging changes to enrollment.grade</li>
+    </ul>
+</div>
+
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🚀 What's Next?</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Session 12: Introduction to NoSQL & Distributed Databases</p>
+        <div class="highlight-box" style="text-align:left; max-width: 600px; margin: 30px auto;">
+            You've mastered the relational world end to end — next you'll see how the largest-scale systems make different trade-offs entirely.
+        </div>
+    </div>
+    <div class="footer">DBMS Session 11 — Views, Triggers & Stored Procedures | Unit IV</div>
+</div>
+
+</body>
+</html>

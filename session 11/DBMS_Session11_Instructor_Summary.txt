@@ -1,0 +1,173 @@
+═══════════════════════════════════════════════════════
+  DBMS SESSION 11 — INSTRUCTOR PREPARATION SUMMARY
+═══════════════════════════════════════════════════════
+
+📅 Session Info
+  • Topic: Views, Triggers & Stored Procedures
+  • Unit: IV (continues) — heaviest practical session yet
+  • Duration: 2 Hours
+  • Prerequisite: Session 10 (Recovery & Backup)
+
+📦 Files Created
+  1. DBMS_Session11_Complete.docx      → Full instructor guide (theory + lab + assignment)
+  2. DBMS_Session11_Presentation.html  → Browser slides (open → Print to PDF)
+  3. This Summary                      → Quick prep cheat sheet
+
+═══════════════════════════════════════════════════════
+⏱️ TIME BREAKDOWN (120 Minutes)
+═══════════════════════════════════════════════════════
+
+  0:00-0:05  → Recap + Assignment Review (backup/restore)
+  0:05-0:25  → Views — CREATE VIEW, updatable vs non-updatable
+  0:25-0:45  → Stored Procedures — IN/OUT/INOUT parameters
+  0:45-1:05  → Functions — vs Procedures
+  1:05-1:15  → ☕ BREAK
+  1:15-1:40  → Triggers — BEFORE/AFTER, NEW/OLD, use cases
+  1:40-2:00  → 🔧 HANDS-ON: Build a view + procedure + trigger on College DB
+
+═══════════════════════════════════════════════════════
+🎯 CORE CONCEPTS TO EMPHASIZE
+═══════════════════════════════════════════════════════
+
+  1. VIEWS
+     A virtual table defined by a stored query — usually doesn't
+     store data itself, just re-runs its query on access.
+     Used to: simplify repeated complex joins, restrict which
+     columns/rows a user can see (security).
+     Updatable ONLY if: maps to a single base table, no aggregate
+     functions, no GROUP BY/DISTINCT, no subqueries in SELECT list.
+
+  2. STORED PROCEDURES
+     A precompiled, named block of SQL that can take parameters
+     and be called repeatedly. Reduces network round-trips, keeps
+     business logic in the database.
+     IN: value passed in (default)
+     OUT: value passed back to the caller
+     INOUT: both directions
+
+  3. FUNCTIONS vs PROCEDURES (common confusion)
+     Function: MUST return exactly one value, usable INSIDE a SQL
+       expression — SELECT my_func(x)
+     Procedure: called standalone with CALL, can have side effects
+       and multiple OUT parameters, cannot be used inside SELECT
+
+  4. TRIGGERS
+     Code that fires AUTOMATICALLY on INSERT/UPDATE/DELETE.
+     BEFORE trigger: runs before the change is applied (good for
+       validation, modifying the incoming value)
+     AFTER trigger: runs after the change is applied (good for
+       audit logging, cascading side effects)
+     NEW: the row's value after the change (unavailable on DELETE)
+     OLD: the row's value before the change (unavailable on INSERT)
+
+  5. WHY DELIMITER MATTERS
+     A procedure/trigger body contains its own semicolons.
+     DELIMITER // temporarily changes the statement terminator so
+     MySQL doesn't stop at the first internal semicolon.
+
+═══════════════════════════════════════════════════════
+🔧 HANDS-ON: VIEW + PROCEDURE + TRIGGER ON COLLEGE DB
+═══════════════════════════════════════════════════════
+
+  1. VIEW — simplify a 3-table join:
+     CREATE VIEW student_course_view AS
+     SELECT s.roll_no, s.name, c.course_name, e.grade
+     FROM student s
+     JOIN enrollment e ON s.roll_no = e.roll_no
+     JOIN course c ON e.course_id = c.course_id;
+
+     SELECT * FROM student_course_view WHERE grade = 'A';
+
+  2. STORED PROCEDURE — with IN and OUT parameters:
+     DELIMITER //
+     CREATE PROCEDURE GetStudentCGPA(IN p_roll_no INT, OUT p_cgpa DECIMAL(3,2))
+     BEGIN
+       SELECT cgpa INTO p_cgpa FROM student WHERE roll_no = p_roll_no;
+     END //
+     DELIMITER ;
+
+     CALL GetStudentCGPA(101, @cgpa);
+     SELECT @cgpa;
+
+  3. TRIGGER — audit log on cgpa changes:
+     CREATE TABLE student_audit (
+       audit_id INT AUTO_INCREMENT PRIMARY KEY,
+       roll_no INT, old_cgpa DECIMAL(3,2), new_cgpa DECIMAL(3,2),
+       changed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+     );
+
+     DELIMITER //
+     CREATE TRIGGER trg_cgpa_update
+     BEFORE UPDATE ON student
+     FOR EACH ROW
+     BEGIN
+       IF OLD.cgpa <> NEW.cgpa THEN
+         INSERT INTO student_audit(roll_no, old_cgpa, new_cgpa)
+         VALUES (OLD.roll_no, OLD.cgpa, NEW.cgpa);
+       END IF;
+     END //
+     DELIMITER ;
+
+     UPDATE student SET cgpa = 9.8 WHERE roll_no = 101;
+     SELECT * FROM student_audit;
+
+═══════════════════════════════════════════════════════
+📋 QUICK QUIZ ANSWERS
+═══════════════════════════════════════════════════════
+
+  Q1: Can every view be updated directly through UPDATE/INSERT?
+      → No — only simple views without joins/aggregation/DISTINCT
+  Q2: Core difference between a function and a procedure?
+      → A function returns one value and works inside SELECT;
+        a procedure is called standalone and may have no return value
+  Q3: In a trigger, what do NEW and OLD refer to?
+      → NEW = row after the change, OLD = row before the change
+  Q4: Why change DELIMITER before CREATE PROCEDURE/TRIGGER?
+      → So semicolons inside the body don't end the statement early
+  Q5: Name one real-world use case for triggers.
+      → Audit logging, or enforcing validation rules beyond CHECK
+
+═══════════════════════════════════════════════════════
+📝 ASSIGNMENT
+═══════════════════════════════════════════════════════
+
+  Theory: 6 questions (views, procedures vs functions, triggers)
+  Practical:
+    - Create 1 view joining at least 3 tables from the College DB
+    - Create 1 stored procedure using both IN and OUT parameters
+    - Create 1 trigger that logs changes to the enrollment table's
+      grade column into a new audit table
+    - Test and document each with sample calls and output
+  Reading: NoSQL basics, CAP theorem (Session 12 prep)
+
+═══════════════════════════════════════════════════════
+⚠️ COMMON STUDENT MISTAKES TO WATCH FOR
+═══════════════════════════════════════════════════════
+
+  1. Forgetting to reset DELIMITER back to ; after the CREATE block
+  2. Trying to use a stored PROCEDURE inside a SELECT expression
+     (only functions can do that)
+  3. Referencing NEW in a DELETE trigger, or OLD in an INSERT trigger
+     (neither exists in those contexts)
+  4. Creating an audit trigger as AFTER when BEFORE was needed to
+     compare OLD vs NEW before the change commits
+  5. Assuming a view improves performance — it doesn't cache data,
+     it just re-runs its underlying query
+
+═══════════════════════════════════════════════════════
+💡 TEACHING TIPS
+═══════════════════════════════════════════════════════
+
+  1. Build all three (view, procedure, trigger) live, one at a time,
+     testing each immediately with real data before moving on
+  2. Use the audit-trigger example as the payoff moment — updating a
+     row and then immediately querying the audit table to see it
+     appear is very visual and satisfying
+  3. Draw a simple box diagram: View = window, Procedure = reusable
+     action, Trigger = automatic reaction
+  4. Emphasize this is the most "practical, job-relevant" session so
+     far — this is what real backend/DB developer work looks like
+
+═══════════════════════════════════════════════════════
+  Next Session: Introduction to NoSQL & Distributed Databases (Unit V)
+═══════════════════════════════════════════════════════

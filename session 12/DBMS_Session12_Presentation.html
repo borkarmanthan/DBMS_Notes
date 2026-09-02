@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DBMS Session 12 - NoSQL & Distributed Databases</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f7fa; color: #2d3748; line-height: 1.6; }
+        .slide { max-width: 1100px; margin: 30px auto; background: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); padding: 40px; page-break-after: always; }
+        .slide:last-child { page-break-after: auto; }
+        h1 { color: #1a365d; font-size: 2.2em; margin-bottom: 10px; border-bottom: 4px solid #3182ce; padding-bottom: 10px; }
+        h2 { color: #2c5282; font-size: 1.5em; margin: 25px 0 15px; }
+        h3 { color: #2b6cb0; font-size: 1.2em; margin: 20px 0 10px; }
+        .subtitle { color: #718096; font-size: 1.1em; margin-bottom: 20px; }
+        .badge { display: inline-block; background: #3182ce; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.85em; font-weight: 600; margin-right: 8px; }
+        .badge.green { background: #38a169; }
+        .badge.orange { background: #dd6b20; }
+        .badge.purple { background: #805ad5; }
+        .badge.red { background: #e53e3e; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th { background: #2c5282; color: white; padding: 12px; text-align: left; font-weight: 600; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; }
+        tr:nth-child(even) { background: #f7fafc; }
+        .highlight-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .success-box { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .warning-box { background: #fffaf0; border-left: 5px solid #dd6b20; padding: 15px 20px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .code-block { background: #1a202c; color: #e2e8f0; padding: 20px; border-radius: 10px; font-family: 'Consolas', monospace; font-size: 0.95em; overflow-x: auto; margin: 15px 0; }
+        .two-col { display: flex; gap: 30px; margin: 15px 0; }
+        .two-col > div { flex: 1; }
+        .diagram { background: #f7fafc; border: 2px dashed #cbd5e0; padding: 20px; border-radius: 10px; text-align: center; font-family: monospace; white-space: pre; line-height: 1.8; }
+        .fd-card { background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; padding: 15px; margin: 10px 0; }
+        .fd-card h4 { color: #0369a1; margin-bottom: 8px; }
+        .algo-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 18px; margin: 15px 0; }
+        .algo-box h4 { color: #1e3a5f; margin-bottom: 10px; }
+        ul, ol { margin: 10px 0 10px 25px; }
+        li { margin: 6px 0; }
+        .footer { text-align: center; color: #a0aec0; font-size: 0.9em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+        @media print { .slide { box-shadow: none; margin: 0; border-radius: 0; } body { background: white; } }
+    </style>
+</head>
+<body>
+
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <span class="badge purple">SESSION 12</span>
+        <h1 style="border:none; margin-top:15px; font-size: 2.6em;">NoSQL & Distributed Databases</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Unit V | Course Capstone Session</p>
+        <div style="margin: 30px 0;">
+            <span class="badge">Key-Value</span>
+            <span class="badge green">Document</span>
+            <span class="badge orange">Column</span>
+            <span class="badge red">Graph</span>
+        </div>
+    </div>
+</div>
+
+<div class="slide">
+    <h1>🌐 Why NoSQL?</h1>
+    <div class="highlight-box">RDBMS is excellent at consistency and complex relationships — but scaling it horizontally across many machines is hard.</div>
+    <ul>
+        <li>Horizontal scaling: add more machines instead of a bigger one</li>
+        <li>Flexible / schema-less data — structure can vary row to row</li>
+        <li>High write throughput at massive scale</li>
+        <li>Natural fit for semi-structured or unstructured data</li>
+    </ul>
+</div>
+
+<div class="slide">
+    <h1>🗃️ Four Types of NoSQL Databases</h1>
+    <table>
+        <tr><th>Type</th><th>Example</th><th>Best For</th></tr>
+        <tr><td><strong>Key-Value</strong></td><td>Redis, DynamoDB</td><td>Simplest — O(1) lookup by key</td></tr>
+        <tr><td><strong>Document</strong></td><td>MongoDB, CouchDB</td><td>JSON-like, flexible fields</td></tr>
+        <tr><td><strong>Column-family</strong></td><td>Cassandra, HBase</td><td>Write-heavy, wide-column workloads</td></tr>
+        <tr><td><strong>Graph</strong></td><td>Neo4j</td><td>Relationship-heavy data — social networks</td></tr>
+    </table>
+</div>
+
+<div class="slide">
+    <h1>⚖️ CAP Theorem</h1>
+    <div class="highlight-box">During a network partition, a distributed system can only guarantee <strong>2 of these 3</strong>:</div>
+    <div class="two-col">
+        <div>
+            <div class="fd-card"><h4>Consistency</h4><p style="font-size:0.9em;">Every read gets the latest write</p></div>
+            <div class="fd-card" style="border-color:#38a169;"><h4 style="color:#276749;">Availability</h4><p style="font-size:0.9em;">Every request gets a response</p></div>
+        </div>
+        <div>
+            <div class="fd-card" style="border-color:#805ad5;"><h4 style="color:#6b21a8;">Partition Tolerance</h4><p style="font-size:0.9em;">System keeps working despite network splits</p></div>
+        </div>
+    </div>
+    <div class="warning-box">Most real distributed NoSQL systems choose <strong>AP</strong> (available + partition-tolerant, eventual consistency) over strict consistency.</div>
+</div>
+
+<div class="slide">
+    <h1>🆚 SQL vs NoSQL — ACID vs BASE</h1>
+    <table>
+        <tr><th></th><th>ACID (RDBMS)</th><th>BASE (typical NoSQL)</th></tr>
+        <tr><td>Philosophy</td><td>Strict correctness</td><td>Basically Available, Soft state, Eventual consistency</td></tr>
+        <tr><td>Best for</td><td>Banking, the College DB</td><td>Social feeds, IoT streams, catalogs</td></tr>
+        <tr><td>Trade-off</td><td>Consistency over raw scale</td><td>Scale/speed over strict correctness</td></tr>
+    </table>
+</div>
+
+<div class="slide">
+    <h1>🔧 Hands-On: College DB as a Document</h1>
+    <div class="code-block">{
+  "roll_no": 101,
+  "name": "Nilisha",
+  "dept": { "dept_id": 1, "dept_name": "Computer Science" },
+  "enrollments": [
+    { "course_id": 501, "course_name": "DBMS", "grade": "A" },
+    { "course_id": 502, "course_name": "Circuits", "grade": "B" }
+  ]
+}</div>
+    <div class="warning-box"><strong>The full-circle moment:</strong> dept_name is now duplicated across every student in that department — exactly the update anomaly Session 6's normalization removed. Document databases accept this deliberately, in exchange for a single-read fetch with no joins.</div>
+</div>
+
+<div class="slide">
+    <h1>📝 Session 12 Assignment (Final)</h1>
+    <h3>Theory</h3>
+    <ul>
+        <li>Compare the four NoSQL types</li>
+        <li>Apply CAP theorem to a given distributed scenario</li>
+        <li>Compare ACID and BASE</li>
+    </ul>
+    <h3>Practical</h3>
+    <ul>
+        <li>Convert the full College DB into a document-model JSON schema</li>
+        <li>Justify each embedding vs referencing decision</li>
+        <li>List 2 scenarios favoring NoSQL, 2 favoring the relational model</li>
+    </ul>
+    <div class="highlight-box">This is the final assignment of the course — review Sessions 1-12 as exam preparation.</div>
+</div>
+
+<div class="slide">
+    <div style="text-align:center; padding: 60px 0;">
+        <h1 style="border:none;">🎓 Course Complete</h1>
+        <p class="subtitle" style="font-size: 1.2em;">Sessions 1-12 cover the full DBMS syllabus</p>
+        <div class="highlight-box" style="text-align:left; max-width: 600px; margin: 30px auto;">
+            From core theory and SQL, through ER modeling and normalization, to indexing, transactions, and now distributed systems — the same College DB carried every concept end to end. Suggested next steps: distributed transactions, sharding/replication, and a hands-on MongoDB or PostgreSQL deep dive.
+        </div>
+    </div>
+    <div class="footer">DBMS Session 12 — NoSQL & Distributed Databases | Unit V</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,143 @@
+═══════════════════════════════════════════════════════
+  DBMS SESSION 10 — INSTRUCTOR PREPARATION SUMMARY
+═══════════════════════════════════════════════════════
+
+📅 Session Info
+  • Topic: Database Recovery & Backup
+  • Unit: IV (continues)
+  • Duration: 2 Hours
+  • Prerequisite: Session 9 (Query Processing & Optimization)
+
+📦 Files Created
+  1. DBMS_Session10_Complete.docx      → Full instructor guide (theory + lab + assignment)
+  2. DBMS_Session10_Presentation.html  → Browser slides (open → Print to PDF)
+  3. This Summary                      → Quick prep cheat sheet
+
+═══════════════════════════════════════════════════════
+⏱️ TIME BREAKDOWN (120 Minutes)
+═══════════════════════════════════════════════════════
+
+  0:00-0:05  → Recap + Assignment Review (query optimization)
+  0:05-0:20  → Why Recovery? Types of Failures
+  0:20-0:40  → Write-Ahead Logging (WAL)
+  0:40-1:00  → Checkpoints
+  1:00-1:10  → ☕ BREAK
+  1:10-1:30  → Deferred vs Immediate Update, REDO/UNDO
+  1:30-1:45  → ARIES Overview + Backup Strategies
+  1:45-2:00  → 🔧 HANDS-ON: mysqldump backup/restore + binary log inspection
+
+═══════════════════════════════════════════════════════
+🎯 CORE CONCEPTS TO EMPHASIZE
+═══════════════════════════════════════════════════════
+
+  1. THREE TYPES OF FAILURE
+     Transaction failure: logical error (e.g. constraint violation)
+     System crash: power/OS failure — volatile memory contents lost
+     Disk failure: non-volatile storage itself damaged
+
+  2. WRITE-AHEAD LOGGING (WAL) — THE CORE PRINCIPLE
+     The log record for a change MUST be written to stable storage
+     BEFORE the actual data page is written to disk.
+     → This single rule is what makes recovery possible at all.
+
+  3. LOG RECORD FORMAT
+     <Transaction_id, Data_item, Old_value, New_value>
+
+  4. CHECKPOINTS
+     A periodic snapshot of which transactions were active.
+     Recovery only needs to replay the log SINCE the last checkpoint —
+     not from the very beginning of the log.
+
+  5. DEFERRED vs IMMEDIATE UPDATE
+     Deferred Update: writes to DB only happen after commit
+       → only REDO is ever needed on recovery
+     Immediate Update: writes can happen before commit
+       → both REDO (committed) and UNDO (uncommitted) are needed
+
+  6. ARIES (3 PHASES — the algorithm real databases actually use)
+     Analysis: figure out which transactions were active at crash time
+     Redo: repeat history — redo every logged action since the
+       last checkpoint
+     Undo: roll back the "loser" transactions that never committed
+
+  7. BACKUP TYPES
+     Full: entire database, every time
+     Incremental: only changes since the last backup (of any type)
+     Differential: only changes since the last FULL backup
+
+═══════════════════════════════════════════════════════
+🔧 HANDS-ON: BACKUP, RESTORE & BINARY LOG
+═══════════════════════════════════════════════════════
+
+  Full backup:
+    mysqldump -u root -p college_demo > college_backup.sql
+
+  Simulate data loss (on a throwaway copy, not the real DB!):
+    DROP TABLE student;
+
+  Restore from backup:
+    mysql -u root -p college_demo < college_backup.sql
+
+  Inspect MySQL's own write-ahead-style log:
+    SHOW BINARY LOGS;
+    SHOW BINLOG EVENTS IN 'binlog.000001';
+
+  Connect it back to theory: the binary log IS a real-world example
+  of the write-ahead logging principle just taught — every change is
+  logged before/alongside being applied, enabling replay-based recovery.
+
+═══════════════════════════════════════════════════════
+📋 QUICK QUIZ ANSWERS
+═══════════════════════════════════════════════════════
+
+  Q1: What must happen before a data page is written to disk under WAL?
+      → Its log record must be written first
+  Q2: What does a checkpoint reduce during recovery?
+      → The amount of log that needs to be replayed
+  Q3: Deferred update recovery only ever needs?
+      → REDO
+  Q4: Immediate update recovery needs?
+      → Both REDO and UNDO
+  Q5: What are ARIES's three phases, in order?
+      → Analysis, Redo, Undo
+
+═══════════════════════════════════════════════════════
+📝 ASSIGNMENT
+═══════════════════════════════════════════════════════
+
+  Theory: 7 questions (failure types, WAL, checkpoints, ARIES)
+  Practical:
+    - Take a full mysqldump backup of college_demo
+    - Simulate a table drop on a throwaway copy, restore from backup
+    - Document every command used and the outcome
+    - Inspect binary log events for 2-3 recent transactions
+  Reading: Views, Stored Procedures, Triggers (Session 11 prep)
+
+═══════════════════════════════════════════════════════
+⚠️ COMMON STUDENT MISTAKES TO WATCH FOR
+═══════════════════════════════════════════════════════
+
+  1. Confusing a checkpoint with a backup — they solve different problems
+  2. Thinking WAL means the DATA is written first (it's the opposite)
+  3. Mixing up incremental (since last backup) vs differential
+     (since last FULL backup)
+  4. Assuming REDO and UNDO always both apply regardless of update mode
+  5. Running destructive practice commands directly on the real DB
+     instead of a disposable copy
+
+═══════════════════════════════════════════════════════
+💡 TEACHING TIPS
+═══════════════════════════════════════════════════════
+
+  1. Use a "diary written before acting" analogy for WAL — you write
+     down your plan before doing it, so if interrupted, the diary
+     shows exactly what to redo or undo
+  2. Physically demonstrate mysqldump + DROP TABLE + restore live —
+     the moment data reappears is the payoff
+  3. Draw the ARIES 3-phase flow as a simple left-to-right diagram
+  4. Stress: backups protect against DISK failure; logs/checkpoints
+     protect against CRASH — they are not interchangeable safety nets
+
+═══════════════════════════════════════════════════════
+  Next Session: Views, Triggers & Stored Procedures (Unit IV continues)
+═══════════════════════════════════════════════════════
